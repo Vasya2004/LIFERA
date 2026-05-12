@@ -24,11 +24,11 @@
 
 Цель: создать визуальный и структурный фундамент.
 
-Результат: AppShell, навигация, базовые UI-компоненты.
+Результат: AppShell, навигация, базовые UI-компоненты, public placeholder routes для входа, регистрации и onboarding.
 
-Файлы/модули: layout, shared UI, Tailwind, shadcn/ui.
+Файлы/модули: layout, shared UI, Tailwind, shadcn/ui, `src/app/(public)`.
 
-Проверка готовности: основные роуты имеют единый layout и адаптивную навигацию.
+Проверка готовности: основные роуты имеют единый layout и адаптивную навигацию; `/auth`, `/register` и `/onboarding` доступны как UI-only placeholders перед подключением Supabase Auth.
 
 ## 4. Авторизация
 

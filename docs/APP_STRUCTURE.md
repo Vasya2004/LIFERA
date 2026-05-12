@@ -27,6 +27,7 @@ LifeOS должен развиваться модульно. Каждый кру
 Для первой рабочей версии обязательны только:
 
 - `/auth`;
+- `/register`;
 - `/onboarding`;
 - `/dashboard`;
 - `/goals`;
@@ -38,6 +39,8 @@ LifeOS должен развиваться модульно. Каждый кру
 - `/settings`.
 
 Роуты `/skills`, `/health` и `/capital` относятся к следующему продуктовому слою. Их не нужно реализовывать до проверки основного цикла Goals -> Tasks/Habits -> XP -> Dashboard -> AI Coach.
+
+Текущий статус foundation: `/auth`, `/register` и `/onboarding` реализованы как public placeholder routes в route group `src/app/(public)`. Они не подключают Supabase Auth, не создают API routes и нужны как UX-каркас перед реальной авторизацией.
 
 ## Возможные группы компонентов
 
