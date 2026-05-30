@@ -1,90 +1,80 @@
-# App Structure
+# Lifera App Structure
 
-## Основной принцип
+Stage 1 зафиксировал финальную информационную архитектуру и product flow. См. также `PRODUCT_FLOW.md` и `TECH_ARCHITECTURE.md`.
 
-LifeOS должен развиваться модульно. Каждый крупный раздел отвечает за свою предметную область, но общие пользовательские данные, авторизация, XP, достижения и AI-рекомендации связывают модули между собой через понятные backend-интерфейсы.
+Формула продукта:
 
-## Предварительные роуты
+```text
+Цель → Челлендж / Привычка → Прогресс → XP → Уровень → Достижения → AI-рекомендация
+```
 
-| Роут | Назначение |
+Привычки в Lifera — регулярные ритуалы прокачки сфер жизни, а не обычный habit tracker.
+
+## Public Routes
+
+| Route | Purpose |
 | --- | --- |
-| `/auth` | Регистрация, вход, восстановление доступа. |
-| `/onboarding` | Первичная настройка пользователя и выбор сфер развития. |
-| `/dashboard` | Главный обзор: задачи, привычки, цели, XP, рекомендации. |
-| `/goals` | Создание, просмотр и управление целями. |
-| `/tasks` | Список задач, фильтры, выполнение задач. |
-| `/habits` | Привычки, отметки, streak, история. |
-| `/skills` | Навыки, уровни развития, связь с целями. |
-| `/health` | Логи здоровья, самочувствия и активности. |
-| `/capital` | Финансовые записи и капитал. |
-| `/achievements` | Достижения, уровни и игровые события. |
-| `/ai-coach` | AI-помощник и история рекомендаций. |
-| `/profile` | Профиль пользователя. |
-| `/settings` | Настройки приложения, приватности и интеграций. |
+| `/` | Premium SaaS landing |
+| `/pricing` | Free / Pro / Ultra plans (public pricing UI) |
+| `/login` | Sign in |
+| `/register` | Sign up |
+| `/onboarding` | Initial life areas, first goal and starter challenge |
+| `/privacy` | Privacy policy |
+| `/terms` | Terms |
 
-## Роуты Core MVP
+Публичная модель тарифов (UI на `/` и `/pricing`, без backend gates):
 
-Для первой рабочей версии обязательны только:
+- **Free** — старт с лимитами и 7-дневной историей
+- **Pro** — полноценная личная система без лимитов по ядру
+- **Ultra** — глубокий AI, стратегии и расширенная аналитика
 
-- `/auth`;
-- `/register`;
-- `/onboarding`;
-- `/dashboard`;
-- `/goals`;
-- `/tasks`;
-- `/habits`;
-- `/achievements`;
-- `/ai-coach`;
-- `/profile`;
-- `/settings`.
+## App Routes (core navigation)
 
-Роуты `/skills`, `/health` и `/capital` относятся к следующему продуктовому слою. Их не нужно реализовывать до проверки основного цикла Goals -> Tasks/Habits -> XP -> Dashboard -> AI Coach.
+| Route | Label | Purpose |
+| --- | --- | --- |
+| `/dashboard` | Главная | Ecosystem overview, Life Score, XP, next step |
+| `/goals` | Цели | Goal CRUD and life area linkage |
+| `/challenges` | Челленджи | Challenge CRUD and staged progress |
+| `/habits` | Привычки | Rituals linked to goals/skills/challenges (full module later) |
+| `/progress` | Прогресс | XP, level and progress overview |
+| `/achievements` | Достижения | Locked/unlocked achievements |
+| `/skills` | Навыки | Skills preview / summary |
+| `/finance` | Финансы | Finance summary (manual/demo) |
+| `/health` | Здоровье | Wellness summary |
+| `/ai-assistant` | AI Ассистент | Rule-based recommendations |
+| `/profile` | Профиль | Account, level, XP, life areas |
+| `/settings` | Настройки | Account, appearance, privacy, data, plan |
+| `/plan` | План | Free/Premium state and demo activation (canonical) |
+| `/billing` | — | Technical alias of `/plan` |
 
-Текущий статус foundation: `/auth`, `/register` и `/onboarding` реализованы как public placeholder routes в route group `src/app/(public)`. Они не подключают Supabase Auth, не создают API routes и нужны как UX-каркас перед реальной авторизацией.
+## Sidebar layout
 
-## Возможные группы компонентов
+**Основное:** Главная.
 
-- Layout: `AppShell`, `Sidebar`, `MobileNav`, `TopBar`, `PageHeader`.
-- Auth: `AuthForm`, `ProtectedRoute`, `SessionProvider`.
-- Dashboard: `TodayTasks`, `HabitChecklist`, `LifeAreaProgress`, `XPProgress`, `CoachSuggestion`.
-- Goals: `GoalCard`, `GoalForm`, `GoalProgress`, `GoalTaskList`.
-- Tasks: `TaskList`, `TaskItem`, `TaskFilters`, `TaskForm`.
-- Habits: `HabitCard`, `HabitTracker`, `StreakIndicator`, `HabitCalendar`.
-- Skills: `SkillCard`, `SkillProgress`, `SkillForm`.
-- Health: `HealthLogForm`, `HealthMetricCard`, `WellbeingChart`.
-- Capital: `CapitalEntryForm`, `CapitalSummary`, `CapitalChart`.
-- Achievements: `AchievementCard`, `LevelProgress`, `XPEventList`.
-- AI Coach: `CoachChat`, `RecommendationCard`, `GoalBreakdownPreview`.
-- Shared UI: buttons, dialogs, forms, empty states, skeletons, toasts.
+**Ядро продукта:** Цели, Челленджи, Привычки, Прогресс, Достижения.
 
-## Независимые модули
+**Сферы:** Навыки, Финансы, Здоровье.
 
-Эти модули должны иметь минимальную связанность и собственные типы/операции:
+**Интеллект:** AI Ассистент.
 
-- Auth/Profile.
-- Goals.
-- Tasks.
-- Habits.
-- Skills - после Core MVP.
-- Health - после Core MVP, с отдельной проверкой приватности.
-- Capital - после Core MVP, с отдельной проверкой приватности.
-- AI Coach.
-- Analytics.
-- Billing в будущем.
+**Нижний блок:** Профиль, Настройки, План.
 
-## Связанные модули
+Конфигурация: `src/config/navigation.ts`. Рендер: `Sidebar`, `MobileNav` (подмножество: Главная, Цели, Челленджи, Привычки, AI Ассистент).
 
-Некоторые области неизбежно связаны:
+## Legacy routes
 
-- Goals связаны с Tasks, Skills и Life Areas.
-- Tasks и Habits создают XP-события.
-- Habit Logs влияют на streak и достижения.
-- Achievements зависят от XP Events, Tasks, Habits, Goals и Skills.
-- Dashboard читает агрегированные данные из нескольких модулей.
-- AI Coach может читать ограниченный контекст Goals, Tasks, Habits и Progress.
+Middleware redirects (authenticated):
 
-Для Core MVP связь Skills с Goals/Tasks/Habits считается будущей. В первой версии Dashboard и AI Coach не должны зависеть от Health, Capital или Skills.
+| Route | Target |
+| --- | --- |
+| `/tasks` | `/dashboard` |
+| `/calendar` | `/dashboard` |
+| `/projects` | `/dashboard` |
+| `/actions` | `/dashboard` |
+| `/ai-coach` | `/ai-assistant` |
 
-## Архитектурное правило
+`/habits` is **not** a legacy route — it is part of core navigation.
 
-Модуль не должен напрямую изменять чужую внутреннюю логику. Например, завершение задачи может вызвать общий сервис начисления XP, но не должно вручную создавать достижения в UI-компоненте. Игровые события и достижения должны обрабатываться через отдельный backend-слой или доменные функции.
+## API routes
+
+See `README.md` and `TECH_ARCHITECTURE.md` for the Route Handler list.

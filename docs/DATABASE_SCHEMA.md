@@ -1,343 +1,78 @@
-# Database Schema Draft
+# Database Schema
 
-Этот документ описывает предварительную модель данных. На текущем этапе SQL-миграции не создаются.
+Migrations in `supabase/migrations/` (apply in order):
 
-## Общие правила
+```text
+0001_lifera_foundation.sql
+0002_habits_foundation.sql
+0003_habit_achievements.sql   — habit achievement seeds + updated signup trigger
+0004_branch_extensions.sql    — skills.status, health/finance notes (Stage 6)
+0005_subscription_plans.sql — Free / Pro / Ultra plans, intended_plan (Stage 7)
+0006_achievement_uniqueness.sql — dedupe + unique index on achievements (pre-deploy)
+```
 
-- Все пользовательские таблицы должны иметь `user_id`. Исключения - системные справочники вроде `achievements`.
-- Все персональные данные должны быть защищены Supabase Row Level Security.
-- Пользователь может читать и изменять только свои данные.
-- Сервисные операции AI, XP и достижений должны выполняться через backend-слой.
-- Секреты, API-ключи и платежные данные не хранятся в клиентском коде.
-- Первая миграция должна покрывать Core MVP: `profiles`, `life_areas`, `goals`, `tasks`, `habits`, `habit_logs`, `achievements`, `user_achievements`, `xp_events`, `ai_recommendations`.
-- Таблицы `skills`, `health_logs`, `capital_entries`, `subscriptions` описаны как будущие или расширенные модули и не обязаны входить в первую миграцию.
+Apply `0003` after `0002` for habit-related achievements (`Первый ритуал`, streak milestones). Idempotent backfill script: `node scripts/apply-migration-0003.mjs`.
 
-## profiles
+Apply `0004` after `0003` for Skills / Health / Finance branches (`skills.status`, optional `note` on metrics). Readiness: `node scripts/stage6-readiness.mjs`.
 
-Назначение: расширенный профиль пользователя поверх Supabase Auth.
+Apply `0005` after `0004` for subscription alignment (`premium` → `pro`, plan check `free/pro/ultra`, `user_profiles.intended_plan`). Script: `node scripts/apply-migration-0005.mjs`.
 
-Основные поля:
+Apply `0006` after `0005` to prevent duplicate achievements per user (`achievements_user_condition_unique` partial unique index).
 
-- `id` - UUID, совпадает с `auth.users.id`.
-- `email` - email пользователя.
-- `display_name` - отображаемое имя.
-- `avatar_url` - ссылка на аватар.
-- `timezone` - timezone пользователя.
-- `onboarding_completed` - завершен ли onboarding.
-- `created_at`, `updated_at`.
+## Tables
 
-Связи: один профиль связан со всеми пользовательскими сущностями через `user_id`.
+### Core (0001)
 
-Защита: персональные данные, email, настройки.
+- `user_profiles`: profile, XP, level, life score, selected life areas, plan (`free`/`pro`/`ultra`), `intended_plan` (registration intent, 0005), onboarding status.
+- `goals`: user goals linked to life area and optional skill.
+- `challenges`: user challenges and system templates.
+- `challenge_stages`: ordered challenge stages with locked/active/completed status.
+- `xp_transactions`: immutable XP ledger with idempotency by `(user_id, source_type, source_id)`.
+- `achievements`: per-user locked/unlocked achievements.
+- `skills`: skill progress — title, category, level, progress, xp_total, status (active/archived, 0004).
+- `health_metrics`: manual wellness metrics — metric_type, value, date, optional note (0004).
+- `finance_metrics`: manual finance metrics — metric_type, value, date, optional note (0004).
+- `ai_recommendations`: generated recommendations.
+- `subscriptions`: Free / Pro / Ultra state and provider metadata (`demo`, `manual`, future payment providers).
 
-RLS: пользователь может читать и обновлять только свой профиль.
+### Habits (0002)
 
-## life_areas
+- `habits`: regular life-area rituals — title, description, `life_area`, `frequency`, `status`, `xp_reward`, `streak_current`, `streak_best`, `linked_goal_id`, `linked_skill_id`, `linked_challenge_id`, `last_completed_at`.
+- `habit_logs`: daily completion ledger — `habit_id`, `completed_on` (date), `xp_awarded`. Unique `(habit_id, completed_on)` prevents duplicate XP per day.
 
-Назначение: сферы жизни пользователя: здоровье, финансы, обучение, карьера и другие.
+### Habit achievements (0003)
 
-Основные поля:
+Adds four achievement definitions per user:
 
-- `id`.
-- `user_id`.
-- `name`.
-- `slug`.
-- `color`.
-- `icon`.
-- `is_active`.
-- `sort_order`.
-- `source` - `preset` или `custom`.
-- `created_at`, `updated_at`.
+| Title | condition_type | condition_value |
+| --- | --- | --- |
+| Первый ритуал | `habit_completions` | 1 |
+| Серия 3 дня | `habit_streak` | 3 |
+| Серия 7 дней | `habit_streak` | 7 |
+| Стабильная прокачка | `habit_completions` | 10 |
 
-Связи: `goals`, `tasks`, `habits`, `skills`, `health_logs`, `capital_entries`.
+Updates `create_lifera_profile()` trigger so new registrations receive habit achievements.
 
-Защита: личные приоритеты пользователя.
+## Free plan limits (server-side)
 
-RLS: доступ только владельцу.
+Enforced in `src/lib/domain/subscription.ts`:
 
-Примечание: в Core MVP `life_areas` являются пользовательскими записями. Отдельный справочник системных шаблонов сфер можно добавить позже, если понадобится централизованное управление пресетами.
+- 3 active goals
+- 2 active challenges
+- 5 active habits
+- 3 AI recommendations per week (Free)
+- 7 days progress history display (Free)
 
-## goals
+Pro and Ultra remove core entity limits, premium templates gate, AI generation gate, and progress history cutoff. Ultra-specific features are mostly **coming soon** in MVP UI.
 
-Назначение: цели пользователя.
+## Security
 
-Основные поля:
+RLS is enabled for all personal tables. Owner policies use `auth.uid() = user_id`.
 
-- `id`.
-- `user_id`.
-- `life_area_id`.
-- `title`.
-- `description`.
-- `status` - `active`, `paused`, `completed`, `archived`.
-- `priority`.
-- `target_date`.
-- `progress_percent`.
-- `created_at`, `updated_at`, `completed_at`.
+`habits` and `habit_logs` have owner SELECT/INSERT/UPDATE/DELETE (habits) policies.
 
-Связи: цель может иметь много `tasks`, быть связана с `skills` и `xp_events`.
+XP transactions, achievement unlocks, habit completion XP and subscriptions are modified by server/business logic (service role where required), not arbitrary UI code.
 
-Защита: личные цели и планы.
+## External API / MCP (future)
 
-RLS: доступ только владельцу.
-
-## tasks
-
-Назначение: конкретные действия пользователя.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `goal_id`.
-- `life_area_id`.
-- `skill_id` - опционально, после включения Skills.
-- `title`.
-- `description`.
-- `status` - `todo`, `in_progress`, `completed`, `cancelled`.
-- `priority`.
-- `due_date`.
-- `completed_at`.
-- `created_at`, `updated_at`.
-
-Связи: может принадлежать цели и сфере жизни; выполнение создает `xp_events`; в будущем может прокачивать один навык через `skill_id` или отдельную join-таблицу.
-
-Защита: личные задачи.
-
-RLS: доступ только владельцу.
-
-## habits
-
-Назначение: регулярные действия пользователя.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `life_area_id`.
-- `skill_id` - опционально, после включения Skills.
-- `title`.
-- `description`.
-- `frequency` - ежедневная, еженедельная или пользовательская.
-- `target_count`.
-- `current_streak`.
-- `best_streak`.
-- `last_completed_at`.
-- `is_active`.
-- `created_at`, `updated_at`.
-
-Связи: имеет много `habit_logs`, создает XP через выполнение; в будущем может прокачивать один навык через `skill_id` или отдельную join-таблицу.
-
-Защита: личные привычки и ритм жизни.
-
-RLS: доступ только владельцу.
-
-## habit_logs
-
-Назначение: история выполнения привычек.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `habit_id`.
-- `log_date`.
-- `status` - `completed`, `skipped`, `missed`.
-- `note`.
-- `created_at`.
-
-Связи: принадлежит `habits`, влияет на streak, XP и достижения.
-
-Ограничения: нужна уникальность `user_id + habit_id + log_date`, чтобы одну привычку нельзя было отметить дважды за один день.
-
-Защита: поведенческие данные пользователя.
-
-RLS: доступ только владельцу.
-
-Статус: не входит в Core MVP, если первая версия фокусируется на целях, задачах, привычках и общем XP.
-
-## skills
-
-Назначение: навыки, которые пользователь развивает.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `life_area_id`.
-- `name`.
-- `description`.
-- `level`.
-- `xp`.
-- `target_level`.
-- `created_at`, `updated_at`.
-
-Связи: может быть связан с целями и XP-событиями.
-
-Защита: данные о развитии и компетенциях.
-
-RLS: доступ только владельцу.
-
-## health_logs
-
-Назначение: базовые записи здоровья и самочувствия.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `log_date`.
-- `sleep_hours`.
-- `mood`.
-- `energy_level`.
-- `activity_minutes`.
-- `weight`.
-- `notes`.
-- `created_at`.
-
-Связи: может агрегироваться на dashboard и использоваться AI только при явном сценарии.
-
-Защита: чувствительные данные здоровья.
-
-RLS: строгий доступ только владельцу. Не передавать в AI без явной необходимости.
-
-Статус: не входит в Core MVP. Добавлять только после отдельного проектирования приватности и UX.
-
-## capital_entries
-
-Назначение: финансовые записи пользователя.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `type` - `income`, `expense`, `asset`, `liability`.
-- `category`.
-- `amount`.
-- `currency`.
-- `entry_date`.
-- `note`.
-- `created_at`, `updated_at`.
-
-Связи: агрегируется в Capital и dashboard.
-
-Защита: финансовые данные.
-
-RLS: строгий доступ только владельцу. Не передавать в AI без явной необходимости.
-
-Статус: не входит в Core MVP. Добавлять только после отдельного проектирования приватности, валют и финансовых категорий.
-
-## achievements
-
-Назначение: каталог достижений.
-
-Основные поля:
-
-- `id`.
-- `code`.
-- `title`.
-- `description`.
-- `icon`.
-- `xp_reward`.
-- `condition_type`.
-- `condition_value`.
-- `is_active`.
-- `created_at`, `updated_at`.
-
-Связи: связывается с пользователями через `user_achievements`.
-
-Защита: публичный или системный справочник.
-
-RLS: можно разрешить чтение всем авторизованным пользователям; изменение только backend/admin.
-
-## user_achievements
-
-Назначение: полученные пользователем достижения.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `achievement_id`.
-- `earned_at`.
-- `metadata`.
-
-Связи: принадлежит `profiles` и `achievements`.
-
-Ограничения: нужна уникальность `user_id + achievement_id`, чтобы достижение нельзя было выдать повторно.
-
-Защита: личный прогресс пользователя.
-
-RLS: доступ только владельцу.
-
-## xp_events
-
-Назначение: журнал начисления XP.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `source_type` - `task`, `habit`, `goal`, `skill`, `achievement`, `ai`.
-- `source_id`.
-- `life_area_id` - опционально, для прогресса по сфере.
-- `amount`.
-- `reason`.
-- `metadata`.
-- `created_at`.
-
-Связи: может ссылаться на разные сущности через `source_type` и `source_id`.
-
-Защита: личный игровой прогресс.
-
-RLS: чтение только владельцу; создание предпочтительно через backend-логику.
-
-## ai_recommendations
-
-Назначение: история AI-рекомендаций.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `type` - `goal`, `tasks`, `habit`, `progress`, `next_step`.
-- `prompt_summary`.
-- `response`.
-- `status` - `suggested`, `accepted`, `rejected`, `applied`.
-- `related_goal_id`.
-- `model`.
-- `input_tokens`.
-- `output_tokens`.
-- `cost_estimate`.
-- `created_at`, `updated_at`.
-
-Связи: может быть связана с целями, задачами или привычками.
-
-Защита: AI-запросы и персональные рекомендации.
-
-RLS: доступ только владельцу. Содержимое должно минимизировать чувствительные данные.
-
-Примечание: для Core MVP дневные лимиты AI можно считать по количеству записей `ai_recommendations` за день. Если появятся более сложные лимиты, можно добавить отдельную таблицу `ai_usage_events`.
-
-## subscriptions
-
-Назначение: будущая модель подписок и платежей.
-
-Основные поля:
-
-- `id`.
-- `user_id`.
-- `stripe_customer_id`.
-- `stripe_subscription_id`.
-- `plan`.
-- `status`.
-- `current_period_start`.
-- `current_period_end`.
-- `created_at`, `updated_at`.
-
-Связи: профиль пользователя и Stripe.
-
-Защита: платежные идентификаторы и статус подписки.
-
-RLS: чтение только владельцу; изменение только через backend/webhooks.
-
-Статус: будущий модуль. Не создавать в первой миграции без задачи на платежи.
+No `api_tokens`, `agent_action_logs` or MCP tables yet — see `docs/API_ACCESS_FUTURE.md`.

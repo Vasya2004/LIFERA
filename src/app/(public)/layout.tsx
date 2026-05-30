@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
-import { PublicShell } from "@/components/layout/public-shell";
+import { PublicShellRouter } from "@/components/layout/public-shell-router";
 
 type PublicLayoutProps = {
   children: ReactNode;
 };
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
-  return <PublicShell>{children}</PublicShell>;
+  return <PublicShellRouter>{children}</PublicShellRouter>;
 }

@@ -1,17 +1,18 @@
 type PageHeaderProps = {
+  description?: string;
   title: string;
-  description: string;
 };
 
-export function PageHeader({ title, description }: PageHeaderProps) {
+export function PageHeader({ description, title }: PageHeaderProps) {
   return (
-    <header className="border-b border-border bg-surface/80 px-5 py-6 sm:px-8">
+    <header className="border-b border-border bg-surface/80 px-5 py-5 backdrop-blur sm:px-8">
       <div className="mx-auto max-w-6xl">
-        <p className="text-sm font-medium text-muted">LifeOS Core MVP</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {title}
         </h1>
-        <p className="mt-3 max-w-3xl leading-7 text-muted">{description}</p>
+        {description ? (
+          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{description}</p>
+        ) : null}
       </div>
     </header>
   );

@@ -1,48 +1,115 @@
 export type NavigationItem = {
   href: string;
+  icon: string;
   label: string;
-  description: string;
+  group: "main" | "core" | "areas" | "intelligence" | "system";
+  mobile?: boolean;
 };
+
+/** Canonical plan route; `/billing` remains a technical alias. */
+export const planRouteHref = "/plan";
 
 export const navigationItems: NavigationItem[] = [
   {
     href: "/dashboard",
-    label: "Dashboard",
-    description: "Обзор целей, задач, привычек, XP и рекомендаций.",
+    icon: "home",
+    label: "Главная",
+    group: "main",
+    mobile: true,
   },
   {
     href: "/goals",
-    label: "Goals",
-    description: "Постановка и отслеживание целей.",
+    icon: "target",
+    label: "Цели",
+    group: "core",
+    mobile: true,
   },
   {
-    href: "/tasks",
-    label: "Tasks",
-    description: "Конкретные действия, связанные с целями.",
+    href: "/challenges",
+    icon: "challenge",
+    label: "Челленджи",
+    group: "core",
+    mobile: true,
   },
   {
     href: "/habits",
-    label: "Habits",
-    description: "Регулярные действия, streak и история выполнения.",
+    icon: "ritual",
+    label: "Привычки",
+    group: "core",
+    mobile: true,
+  },
+  {
+    href: "/progress",
+    icon: "progress",
+    label: "Прогресс",
+    group: "core",
   },
   {
     href: "/achievements",
-    label: "Achievements",
-    description: "Достижения, уровни и игровые события.",
+    icon: "award",
+    label: "Достижения",
+    group: "core",
   },
   {
-    href: "/ai-coach",
-    label: "AI Coach",
-    description: "Помощник для целей, задач, привычек и следующего шага.",
+    href: "/skills",
+    icon: "spark",
+    label: "Навыки",
+    group: "areas",
+  },
+  {
+    href: "/finance",
+    icon: "wallet",
+    label: "Финансы",
+    group: "areas",
+  },
+  {
+    href: "/health",
+    icon: "heart",
+    label: "Здоровье",
+    group: "areas",
+  },
+  {
+    href: "/ai-assistant",
+    icon: "assistant",
+    label: "AI Ассистент",
+    group: "intelligence",
   },
   {
     href: "/profile",
-    label: "Profile",
-    description: "Профиль пользователя и базовая персонализация.",
+    icon: "user",
+    label: "Профиль",
+    group: "system",
   },
   {
     href: "/settings",
-    label: "Settings",
-    description: "Настройки приложения и приватности.",
+    icon: "settings",
+    label: "Настройки",
+    group: "system",
+  },
+  {
+    href: planRouteHref,
+    icon: "billing",
+    label: "План",
+    group: "system",
   },
 ];
+
+export const mobileNavigationItems = navigationItems.filter((item) => item.mobile);
+
+export const mobilePrimaryNavigationItems = navigationItems.filter((item) =>
+  ["/dashboard", "/goals", "/challenges", "/habits"].includes(item.href),
+);
+
+export const mobileMoreNavigationItems = navigationItems.filter(
+  (item) =>
+    !mobilePrimaryNavigationItems.some((primary) => primary.href === item.href) &&
+    !["/billing"].includes(item.href),
+);
+
+export function isNavigationActive(pathname: string, href: string): boolean {
+  if (href === planRouteHref) {
+    return pathname === planRouteHref || pathname === "/billing";
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

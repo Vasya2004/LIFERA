@@ -1,20 +1,20 @@
-# LifeOS UX Patterns v0.1
+# Lifera UX Patterns v0.1
 
 ## 1. Назначение документа
 
-Этот документ фиксирует UX-паттерны для LifeOS Core MVP на основе анализа реальных интерфейсов login, signup, onboarding, dashboard, productivity apps, AI assistant apps и habit tracking apps.
+Этот документ фиксирует UX-паттерны для Lifera Core MVP на основе анализа реальных интерфейсов login, signup, onboarding, dashboard, productivity apps, AI assistant apps и habit tracking apps.
 
 Документ не является финальным UI-дизайном. Это набор UX-ориентиров, которые нужно использовать при дальнейшей разработке `/auth`, `/register`, `/onboarding`, dashboard и связанных экранов Core MVP.
 
-## 2. Общий UX-подход LifeOS
+## 2. Общий UX-подход Lifera
 
-LifeOS должен ощущаться как premium personal operating system: серьезная, понятная и ежедневная система для управления целями, задачами, привычками, прогрессом и AI-рекомендациями.
+Lifera должен ощущаться как premium personal operating system: серьезная, понятная и ежедневная система для управления целями, действиями, проектами, календарем, прогрессом и AI-рекомендациями.
 
 Ключевые установки:
 
 - интерфейс должен быть взрослым, спокойным и пригодным для ежедневного использования;
 - геймификация должна быть сдержанной и работать как слой данных;
-- AI Coach должен помогать пользователю выбрать следующий практический шаг;
+- AI Ассистент должен помогать пользователю выбрать следующий практический шаг;
 - dashboard должен давать понимание текущего прогресса за 5 секунд;
 - визуальная система должна поддерживать ощущение контроля, ясности и накопительного развития.
 
@@ -26,7 +26,7 @@ LifeOS должен ощущаться как premium personal operating system:
 
 Паттерн:
 
-- слева смысловой блок LifeOS;
+- слева смысловой блок Lifera;
 - справа компактная форма;
 - визуально подходит для premium SaaS;
 - помогает объяснить ценность продукта без перегруза;
@@ -46,7 +46,7 @@ LifeOS должен ощущаться как premium personal operating system:
 
 ### 3. Onboarding wizard
 
-Подходит для первичной настройки LifeOS.
+Подходит для первичной настройки Lifera.
 
 Паттерн:
 
@@ -64,8 +64,11 @@ LifeOS должен ощущаться как premium personal operating system:
 
 - sidebar;
 - topbar;
-- grid cards;
-- ключевые зоны: Today, Goals, Habits, XP, AI Coach, Achievements;
+- dominant focus block;
+- compact progress summary;
+- working blocks for actions, habits and goals;
+- optional right rail for AI Ассистент;
+- ключевые зоны: фокус дня, Действия, Календарь, Цели, XP, AI Ассистент, Достижения;
 - dashboard ощущается как рабочий центр управления, а не как витрина продукта.
 
 ### 5. Progress-first layout
@@ -81,14 +84,49 @@ LifeOS должен ощущаться как premium personal operating system:
 
 ### 6. AI side panel / recommendation card
 
-Подходит для AI Coach в первой версии.
+Подходит для AI Ассистента в первой версии.
 
 Паттерн:
 
-- AI Coach показывается как спокойная рекомендация;
+- AI Ассистент показывается как спокойная рекомендация;
 - рекомендация объясняет следующий шаг;
 - ответ AI не занимает весь экран;
-- в первой версии не нужно делать AI Coach большим чатом на весь экран.
+- в первой версии не нужно делать AI Ассистента большим чатом на весь экран.
+
+### 7. Navigation system v0.2
+
+Подходит для основного app shell.
+
+Паттерн:
+
+- desktop использует fixed sidebar + topbar;
+- mobile использует bottom navigation только для ключевых разделов;
+- topbar показывает контекст и действия, а не заменяет sidebar;
+- page tabs используются внутри разделов;
+- breadcrumbs появляются только на detail pages;
+- command/search input предусмотрен как future pattern.
+
+Core sidebar order:
+
+1. Главная.
+2. Действия.
+3. Проекты.
+4. Календарь.
+5. Цели.
+6. Достижения.
+7. Навыки.
+8. Финансы.
+9. Здоровье.
+10. AI Ассистент.
+11. Настройки.
+12. Профиль / user block.
+
+Правила:
+
+- Задачи и Привычки находятся внутри Действия.
+- Желания находятся внутри Цели.
+- AI Coach как UI label не использовать.
+- Аналитика, Рефлексия, Сферы жизни, Магазин и Хранилище не являются top-level разделами Core Navigation v0.2.
 
 ## 4. UX-паттерны для /auth
 
@@ -96,7 +134,7 @@ LifeOS должен ощущаться как premium personal operating system:
 
 Рекомендуемый паттерн:
 
-- короткий заголовок: "Вход в LifeOS";
+- короткий заголовок: "Вход в Lifera";
 - отдельная карточка формы;
 - минимум полей: email и password;
 - ссылка на регистрацию;
@@ -111,11 +149,11 @@ LifeOS должен ощущаться как premium personal operating system:
 
 Экран `/register` должен использовать ту же публичную оболочку, что и `/auth`. Регистрация должна ощущаться частью одного продуктового потока, а не отдельной маркетинговой страницы.
 
-Смысловой блок может объяснять LifeOS через продуктовый словарь:
+Смысловой блок может объяснять Lifera через продуктовый словарь:
 
 - персональный прогресс;
 - первая цель;
-- AI Coach;
+- AI Ассистент;
 - XP.
 
 Форма справа:
@@ -142,7 +180,7 @@ Onboarding должен ощущаться как настройка персо�
 1. Выбор сфер развития.
 2. Создание первой цели.
 3. Выбор стартовых привычек.
-4. Первичная настройка AI Coach.
+4. Первичная настройка AI Ассистента.
 
 Принципы:
 
@@ -157,13 +195,28 @@ Onboarding должен ощущаться как настройка персо�
 
 Dashboard должен быть сканируемым за 5 секунд и сразу отвечать на вопросы:
 
-- что важно сегодня;
-- где есть прогресс;
-- что требует внимания;
-- какой следующий шаг предлагает AI Coach.
+- какой главный фокус сегодня;
+- какой общий прогресс;
+- какие цели активны;
+- какие действия нужно выполнить;
+- какие привычки держатся;
+- что уже достигнуто;
+- что рекомендует AI Ассистент;
+- какие сферы требуют внимания.
+
+Главная Lifera - это не обычная сетка widgets. Это иерархичная рабочая поверхность, которая отвечает на вопрос: "Что сейчас важно и что мне делать дальше?"
+
+Dashboard hierarchy:
+
+1. Hero / Focus Block - главный блок.
+2. XP / Level / Streak - ключевые метрики.
+3. Today Tasks, Habits, Goals Progress, AI Ассистент - рабочие блоки.
+4. Achievements, nearest reward, life areas / future widgets - поддерживающий долгосрочный прогресс.
+5. Health, finance, skills, calendar preview, project progress - secondary/future widgets.
 
 Верхняя сводка:
 
+- Фокус дня;
 - уровень;
 - XP;
 - streak;
@@ -171,19 +224,51 @@ Dashboard должен быть сканируемым за 5 секунд и с
 
 Основная сетка:
 
-- Today tasks;
-- Active goals;
-- Habit checklist;
-- AI Coach recommendation;
-- Achievements / milestones.
+- фокус дня;
+- активные действия;
+- календарный контекст;
+- активные цели;
+- habit checklist;
+- AI Ассистент recommendation;
+- achievements / milestones.
 
 Принципы:
 
+- один главный dominant block;
+- 2-3 medium-priority blocks;
+- остальные compact widgets;
 - карточки должны быть функциональными, не декоративными;
-- AI Coach лучше показывать как next best action;
+- AI Ассистент лучше показывать как next best action;
 - XP и achievements показывать как метрики прогресса, а не игровые награды;
 - важные показатели должны быть видимыми без чтения длинного текста;
 - dashboard не должен превращаться в набор равнозначных карточек без приоритета.
+
+Preferred desktop layout:
+
+- main column: Focus Block, Goals Progress, Today Tasks + Habits, Achievements;
+- right rail: AI Ассистент, XP / Level / Streak, Calendar preview / nearest reward.
+
+Mobile order:
+
+1. Focus Block.
+2. XP / Level / Streak.
+3. AI Ассистент recommendation.
+4. Today Tasks.
+5. Habits.
+6. Goals Progress.
+7. Achievements.
+8. Future widgets.
+
+Не делать:
+
+- 12 одинаковых карточек;
+- случайные графики;
+- декоративные widgets без пользы;
+- crypto-dashboard;
+- game dashboard;
+- перегруженный analytics screen;
+- medical cockpit;
+- finance terminal.
 
 ## 8. Dark и Light UX
 
@@ -200,7 +285,7 @@ Dark и light theme должны иметь одинаковую UX-структ
 
 ## 9. Что нельзя использовать
 
-В LifeOS нельзя использовать:
+В Lifera нельзя использовать:
 
 - fantasy RPG visual;
 - мечи;
@@ -218,15 +303,166 @@ Dark и light theme должны иметь одинаковую UX-структ
 
 Геймификация должна помогать видеть развитие, а не превращать интерфейс в игру.
 
-## 10. 5 ключевых UX-принципов LifeOS
+## 10. 5 ключевых UX-принципов Lifera
 
 1. Один экран - одно главное действие.
 2. Прогресс должен быть видимым, но спокойным.
-3. AI Coach должен помогать выбрать следующий шаг.
+3. AI Ассистент должен помогать выбрать следующий шаг.
 4. Dark и light theme должны иметь одинаковую UX-структуру.
 5. Dashboard должен быть сканируемым за 5 секунд.
 
-## 11. Как использовать этот документ дальше
+## 11. UX-паттерны Design System v0.2
+
+### Data visualization
+
+Визуализация данных должна помогать принять решение, а не украшать экран. Progress bars, rings, charts, streaks, XP timeline и future finance/health/skills charts должны быть спокойными, читаемыми и не похожими на crypto dashboard или rainbow analytics.
+
+Правила:
+
+- primary orange только для key progress/highlight;
+- muted gray для secondary data;
+- green/red только для реального статуса;
+- charts не должны быть декоративными;
+- glow только для milestone/current level.
+
+### Gamification
+
+XP, Level, streak, achievements, milestones и personal rewards должны выглядеть как аналитика личного прогресса.
+
+Запрещено:
+
+- fantasy RPG;
+- сундуки;
+- мечи;
+- персонажи;
+- battle pass;
+- arcade counters;
+- excessive gold;
+- confetti overload.
+
+### AI Ассистент
+
+AI Ассистент должен выглядеть как аналитик и планировщик, а не как магический чат.
+
+Паттерны:
+
+- recommendation card;
+- insight panel;
+- next best action;
+- goal breakdown;
+- habit suggestions;
+- calm loading/error states.
+
+AI-рекомендации должны быть конкретными и связанными с целью, проектом, задачей или привычкой.
+
+### Forms, auth и onboarding
+
+Auth/register/onboarding должны быть спокойными и системными.
+
+Правила:
+
+- labels above fields;
+- placeholder не заменяет label;
+- error text under field;
+- primary CTA orange;
+- no OAuth buttons until OAuth is implemented;
+- onboarding = настройка персональной ОС, не tutorial игры.
+
+### Empty, loading, error states
+
+Empty state должен вести к действию, а не просто сообщать "пусто".
+
+Examples:
+
+- "Создайте первую цель";
+- "Добавьте первую задачу";
+- "AI Ассистенту нужны данные";
+- "Достижения появятся по мере прогресса".
+
+Loading:
+
+- dashboard uses skeleton;
+- forms use button loading;
+- AI uses calm loading text.
+
+Error:
+
+- объяснить проблему;
+- дать следующий шаг;
+- no stack traces;
+- no dramatic language.
+
+### Responsive
+
+Mobile не должен быть урезанной версией. Он должен быть проще, но не беднее по смыслу.
+
+Rules:
+
+- desktop: sidebar + topbar + optional right rail;
+- tablet: right rail moves below hero;
+- mobile: bottom nav, stacked cards, full-width forms;
+- body text не меньше 14px;
+- tap target минимум 44px.
+
+### Iconography and motion
+
+Иконки:
+
+- outline;
+- consistent stroke;
+- no cartoon/fantasy/game icons;
+- lucide-react можно рассмотреть позже без подключения в рамках docs-задачи.
+
+Motion:
+
+- calm;
+- 150-220ms для большинства UI transitions;
+- ease-out;
+- no bounce;
+- no confetti by default;
+- respect `prefers-reduced-motion`.
+
+### Accessibility
+
+Baseline:
+
+- sufficient contrast;
+- visible focus ring;
+- keyboard navigation;
+- aria labels for icon-only buttons;
+- no color-only status;
+- tap targets >= 44px;
+- reduced motion support.
+
+### Content style
+
+Основной язык интерфейса - русский.
+
+Tone:
+
+- спокойный;
+- взрослый;
+- конкретный;
+- без инфобизнеса;
+- без game voice;
+- без токсичной мотивации.
+
+CTA должны быть конкретными: "Создать цель", "Добавить задачу", "Продолжить", "Получить план", "Сохранить".
+
+### Visual QA
+
+Перед сдачей экрана проверить:
+
+- понятна ли иерархия;
+- нет ли стены одинаковых карточек;
+- primary orange не перегружает экран;
+- mobile не ломается;
+- light/dark readable;
+- empty/loading/error states есть;
+- focus visible;
+- экран не выглядит как game UI, crypto dashboard, cyberpunk, medical app или random admin template.
+
+## 12. Как использовать этот документ дальше
 
 Перед созданием новых экранов нужно сверяться с `docs/UX_PATTERNS.md` и `docs/DESIGN_DIRECTION.md`.
 
@@ -236,5 +472,6 @@ Dark и light theme должны иметь одинаковую UX-структ
 - dashboard проектировать как command center, а не как landing page;
 - не добавлять лишние функции до Core MVP;
 - не превращать геймификацию в игровой интерфейс;
-- AI Coach в первой версии показывать как рекомендацию следующего шага;
+- AI Ассистент в первой версии показывать как рекомендацию следующего шага;
+- навигацию строить по Core Navigation v0.2: Главная, Действия, Проекты, Календарь, Цели, Достижения, Навыки, Финансы, Здоровье, AI Ассистент, Настройки, Профиль;
 - новые UI-решения должны поддерживать Adult Gamified Personal OS.

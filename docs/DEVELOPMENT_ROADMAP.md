@@ -1,201 +1,29 @@
 # Development Roadmap
 
-## 1. Документация и архитектура
+## Stage 1 — Architecture & Product Flow Lock (completed)
+
+- Final IA: dashboard, goals, challenges, habits, progress, achievements, skills, finance, health, AI assistant; sidebar footer: profile, settings, plan.
+- Navigation config, sidebar, mobile nav, middleware (`/habits` protected; legacy redirects unchanged).
+- Canonical plan route `/plan`; `/billing` kept as technical alias.
+- `docs/PRODUCT_FLOW.md` and `docs/TECH_ARCHITECTURE.md` added.
+
+## Completed Foundation
+
+- Next.js App Router remains the core stack.
+- Product navigation focuses on goals, challenges, habits, progress, achievements and AI.
+- Supabase clients, middleware and env example added.
+- Initial SQL migration with RLS added.
+- Route Handlers added for profile, onboarding, goals, challenges, stages, XP, achievements, dashboard, AI and subscription.
+- Demo Premium activation added.
+- Landing, pricing, login, register, onboarding, dashboard, goals, challenges, progress, achievements, AI, profile, settings and billing pages added or updated.
+
+## Next Work
+
+1. Apply Supabase migration in a real project.
+2. Fill `.env.local`.
+3. Verify registration, login and onboarding against real Supabase Auth.
+4. Add richer edit/delete UI for goals and challenges.
+5. Add stage completion controls inside challenge detail pages.
+6. Add real OpenAI provider behind the existing AI service interface.
+7. Add production analytics and optional Stripe integration.
 
-Цель: зафиксировать продуктовую и техническую основу.
-
-Результат: README и документы в `docs/`.
-
-Файлы/модули: `README.md`, `docs/*.md`.
-
-Проверка готовности: документы описывают продукт, архитектуру, данные, AI, геймификацию и roadmap.
-
-## 2. Инициализация проекта
-
-Цель: создать базовый Next.js-проект.
-
-Результат: рабочий Next.js-проект без бизнес-логики и без подключения Supabase.
-
-Файлы/модули: `package.json`, `app/`, `tsconfig.json`, конфиги Next.js, Tailwind CSS, базовые настройки lint/format.
-
-Проверка готовности: проект запускается локально и проходит базовую сборку.
-
-## 3. Базовый layout и дизайн-система
-
-Цель: создать визуальный и структурный фундамент.
-
-Результат: AppShell, навигация, базовые UI-компоненты, public placeholder routes для входа, регистрации и onboarding.
-
-Файлы/модули: layout, shared UI, Tailwind, shadcn/ui, `src/app/(public)`.
-
-Проверка готовности: основные роуты имеют единый layout и адаптивную навигацию; `/auth`, `/register` и `/onboarding` доступны как UI-only placeholders перед подключением Supabase Auth.
-
-## 4. Авторизация
-
-Цель: подключить Supabase Auth.
-
-Результат: регистрация, вход, сессии, protected routes.
-
-Файлы/модули: auth routes, Supabase clients, middleware, profile creation.
-
-Проверка готовности: пользователь может зарегистрироваться, войти и выйти.
-
-## 5. Onboarding
-
-Цель: собрать первичные данные пользователя.
-
-Результат: выбор сфер жизни и завершение первичной настройки.
-
-Файлы/модули: onboarding page, forms, `profiles`, `life_areas`.
-
-Проверка готовности: после onboarding пользователь попадает на dashboard.
-
-## 6. Dashboard
-
-Цель: показать центральный обзор LifeOS.
-
-Результат: задачи на сегодня, привычки, цели, XP, рекомендации.
-
-Файлы/модули: dashboard page, aggregate queries, dashboard widgets.
-
-Проверка готовности: dashboard показывает реальные данные пользователя.
-
-## 7. Goals
-
-Цель: реализовать управление целями.
-
-Результат: CRUD целей и связь со сферами жизни.
-
-Файлы/модули: goals page, goal form, goal detail, server actions.
-
-Проверка готовности: пользователь создает, редактирует и завершает цель.
-
-## 8. Tasks
-
-Цель: реализовать задачи.
-
-Результат: CRUD задач, статусы, связь с целями.
-
-Файлы/модули: tasks page, task list, task form, task actions.
-
-Проверка готовности: задача создается, выполняется и обновляет прогресс.
-
-## 9. Habits
-
-Цель: реализовать привычки и отметки.
-
-Результат: привычки, habit logs, streak.
-
-Файлы/модули: habits page, habit tracker, habit log actions.
-
-Проверка готовности: пользователь отмечает привычку и видит streak.
-
-## 10. Skills
-
-Цель: добавить развитие навыков после стабилизации Core MVP.
-
-Результат: список навыков, уровни и XP навыков.
-
-Файлы/модули: skills page, skill form, skill progress.
-
-Проверка готовности: пользователь создает навык и обновляет прогресс; задачи или привычки могут быть связаны с навыком.
-
-## 11. Health
-
-Цель: добавить базовые health logs после отдельного проектирования приватности.
-
-Результат: пользователь фиксирует сон, энергию, настроение и активность.
-
-Файлы/модули: health page, health log form, health summary.
-
-Проверка готовности: записи создаются и отображаются только владельцу.
-
-## 12. Capital
-
-Цель: добавить базовый учет капитала после отдельного проектирования финансовой модели.
-
-Результат: доходы, расходы, активы и summary.
-
-Файлы/модули: capital page, capital entry form, capital summary.
-
-Проверка готовности: пользователь видит агрегаты по своим финансовым записям.
-
-## 13. Achievements
-
-Цель: реализовать каталог и получение достижений.
-
-Результат: достижения выдаются за milestones.
-
-Файлы/модули: achievements page, achievement service, user achievements.
-
-Проверка готовности: первое достижение выдается автоматически при выполнении условия.
-
-## 14. XP и уровни
-
-Цель: централизовать игровой прогресс.
-
-Результат: XP events, уровень пользователя, прогресс до следующего уровня.
-
-Файлы/модули: XP service, level calculator, XP widgets.
-
-Проверка готовности: выполнение задачи или привычки создает XP-событие.
-
-## 15. AI Coach
-
-Цель: добавить AI-помощника через backend.
-
-Результат: сначала рекомендации по формулировке целей, декомпозиции и привычкам; затем анализ прогресса и следующий шаг.
-
-Файлы/модули: AI route handlers, prompt builders, recommendation history.
-
-Проверка готовности: AI-запрос работает без раскрытия API-ключа на клиенте.
-
-## 16. Analytics
-
-Цель: измерять продуктовые события.
-
-Результат: базовые события onboarding, goals, tasks, habits, AI.
-
-Файлы/модули: analytics provider, event tracking helpers.
-
-Проверка готовности: события видны в PostHog или Vercel Analytics.
-
-## 17. PWA
-
-Цель: улучшить мобильный опыт.
-
-Результат: manifest, installable app, базовая offline-стратегия.
-
-Файлы/модули: PWA config, icons, manifest.
-
-Проверка готовности: приложение устанавливается на мобильное устройство.
-
-## 18. Deploy
-
-Цель: вывести продукт в production.
-
-Результат: Vercel deployment, env vars, Supabase production project.
-
-Файлы/модули: deployment config, environment documentation.
-
-Проверка готовности: production URL работает, секреты не раскрыты.
-
-## 19. Тестирование
-
-Цель: повысить надежность.
-
-Результат: базовые тесты критичных сценариев.
-
-Файлы/модули: unit tests, integration tests, e2e smoke tests.
-
-Проверка готовности: ключевые сценарии проходят автоматически.
-
-## 20. Подготовка материалов для диплома
-
-Цель: оформить проект как ВКР.
-
-Результат: архитектурные схемы, скриншоты, описание реализации и выводы.
-
-Файлы/модули: дипломные материалы, диаграммы, презентация.
-
-Проверка готовности: есть связный набор материалов для защиты.

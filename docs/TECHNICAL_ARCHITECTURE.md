@@ -1,132 +1,58 @@
 # Technical Architecture
 
-## Общая архитектура
+> **Stage 1 map:** see [`TECH_ARCHITECTURE.md`](./TECH_ARCHITECTURE.md) for the locked frontend/API/Supabase/domain/deployment diagram.
 
-LifeOS проектируется как web-first SaaS-приложение на Next.js. Клиентская часть отвечает за интерфейс и взаимодействие, backend-слой Next.js - за бизнес-логику, безопасность, AI-вызовы и операции с данными. Supabase PostgreSQL хранит пользовательские данные и обеспечивает авторизацию через Supabase Auth и RLS.
+Lifera is a full-stack Next.js application using Supabase Auth and Supabase PostgreSQL.
 
-## Frontend
+## Application Layers
 
-Frontend строится на Next.js, React и TypeScript. UI должен быть mobile-first, адаптивным и готовым к PWA. Tailwind CSS используется для стилизации, shadcn/ui - для переиспользуемых компонентов интерфейса.
+- `src/app` contains public pages, protected app pages and Route Handlers.
+- `src/components` contains layout, auth, data and UI components.
+- `src/lib/supabase` contains browser/server Supabase clients.
+- `src/lib/auth` contains session helpers.
+- `src/lib/domain` contains centralized business logic for subscription gates, gamification, challenges, dashboard and AI recommendations.
+- `supabase/migrations` contains SQL schema and RLS policies.
 
-Ключевые требования:
+## Backend Rules
 
-- строгая типизация;
-- компонентная структура;
-- доступность базовых UI-элементов;
-- понятные loading, empty и error states;
-- отсутствие прямого доступа к секретам.
+Critical decisions are server-side:
 
-## Backend
+- XP is awarded by `awardXpOnce`.
+- Stage completion is handled by `completeStage`.
+- Achievements are checked by `checkAchievements`.
+- Free/Premium limits are checked by subscription domain helpers.
+- AI recommendations are generated through a service layer, currently rule-based.
 
-Backend реализуется через Next.js Route Handlers и Server Actions. Он отвечает за:
+The UI is not a source of truth for XP, achievements, premium access or ownership.
 
-- проверку сессии пользователя;
-- операции с Supabase;
-- начисление XP;
-- проверку достижений;
-- вызовы OpenAI API;
-- будущие Stripe webhooks;
-- серверную валидацию данных.
+## Auth And Data
 
-Frontend отвечает за состояние интерфейса, формы, навигацию, optimistic UI только там, где это безопасно, и отображение результатов. Он не должен самостоятельно принимать решения о начислении XP, выдаче достижений, доступе к чужим данным или AI-контексте.
+Supabase Auth owns users. `user_profiles` extends auth users. A database trigger creates profile, subscription and starter achievements on registration.
 
-## База данных
+All personal tables use `user_id` and RLS so users can read and mutate only their own data.
 
-Основная база - Supabase PostgreSQL. Все пользовательские данные должны быть защищены Row Level Security. Для Core MVP достаточно реляционной модели с таблицами профилей, сфер жизни, целей, задач, привычек, логов привычек, XP, достижений и AI-рекомендаций. Skills, Health, Capital и Subscriptions лучше добавлять отдельными этапами.
+## Deployment
 
-## Авторизация
+Vercel is the preferred runtime. Required env vars are documented in `.env.example` and `README.md`.
 
-Supabase Auth обеспечивает регистрацию, вход, сессии и связь с `profiles`. Любой защищенный роут должен проверять пользователя. UI не должен считаться источником безопасности: права доступа должны проверяться на уровне Supabase RLS и backend-логики.
+## Future: External Access Layer
 
-## Хранение пользовательских данных
+Not implemented in the web MVP. Architecture is documented in:
 
-Данные LifeOS могут быть чувствительными: цели, здоровье, финансы, привычки и AI-рекомендации. Поэтому:
+- [`API_ACCESS_FUTURE.md`](./API_ACCESS_FUTURE.md) — Public API v1, tokens, scopes, OAuth roadmap
+- [`MCP_FUTURE.md`](./MCP_FUTURE.md) — MCP Server v0.1, resources, tools, read-first rollout
 
-- доступ только владельцу;
-- RLS обязателен;
-- health и capital данные не передаются в AI без необходимости;
-- внешние интеграции добавляются только после отдельного проектирования.
+Planned modules:
 
-## AI-интеграция
+| Module | Role |
+| --- | --- |
+| **Public API v1** | Stable HTTP contract for mobile, bots, agents |
+| **MCP Server** | Agent-native resources and tools over same domain logic |
+| **API Tokens** | User-scoped Bearer auth with granular scopes |
+| **Agent Action Logs** | Audit trail for write/complete operations |
+| **OAuth** | Third-party app consent (post-MVP) |
 
-OpenAI API вызывается только с backend-слоя. Frontend не должен знать API-ключи. Backend собирает минимальный контекст, ограничивает частоту запросов, логирует рекомендации и сохраняет результат в `ai_recommendations`.
+Clients: web (current), mobile, desktop, Telegram bots, external AI agents.
 
-AI-вызов должен проходить через явный сценарий: `goal_builder`, `goal_breakdown`, `habit_suggestion`, `progress_review` или `next_step`. Для каждого сценария нужен свой минимальный набор входных данных, чтобы не отправлять в модель весь профиль пользователя.
+All external entry points call `src/lib/domain/*` — no duplicate gamification or subscription rules.
 
-## Аналитика
-
-Для аналитики рассматриваются PostHog или Vercel Analytics.
-
-В первой версии можно отслеживать:
-
-- завершение onboarding;
-- создание первой цели;
-- выполнение первой задачи;
-- создание привычки;
-- применение AI-рекомендации;
-- retention-события.
-
-Аналитика не должна хранить лишние персональные данные.
-
-## Деплой
-
-Vercel выбран как основной deployment-провайдер, потому что он хорошо интегрируется с Next.js, поддерживает preview deployments, environment variables, serverless runtime и удобный production workflow.
-
-## Будущие платежи
-
-Stripe планируется для будущих подписок. Платежная логика должна быть изолирована:
-
-- webhooks на backend;
-- таблица `subscriptions`;
-- отсутствие платежных секретов на клиенте;
-- разделение free/pro функций через backend-проверки.
-
-## Будущая мобильная версия
-
-Проект сначала делается как веб-приложение, потому что это быстрее для проверки продукта, диплома и стартап-гипотез. Mobile-first web позволит затем:
-
-- включить PWA;
-- адаптировать UX под мобильные сценарии;
-- переиспользовать продуктовую логику для iOS;
-- при необходимости создать iOS-приложение на отдельном клиенте с тем же backend и Supabase.
-
-## Почему Next.js
-
-Next.js выбран из-за:
-
-- единой full-stack модели;
-- поддержки React и TypeScript;
-- Route Handlers и Server Actions;
-- удобного деплоя на Vercel;
-- хорошей экосистемы для SaaS-приложений;
-- возможности строить SEO-страницы и защищенное приложение в одном проекте.
-
-## Почему Supabase
-
-Supabase выбран из-за:
-
-- PostgreSQL как надежной реляционной базы;
-- встроенной авторизации;
-- Row Level Security;
-- удобного client/server SDK;
-- быстрого старта без отказа от production-подхода;
-- возможности масштабировать модель данных.
-
-## Почему Vercel
-
-Vercel выбран из-за:
-
-- нативной поддержки Next.js;
-- preview deployments;
-- удобной работы с environment variables;
-- интеграции с аналитикой;
-- простого production workflow для solo/team разработки.
-
-## Путь к PWA и iOS
-
-Сначала нужно создать надежное адаптивное веб-приложение. После стабилизации core-функций можно добавить:
-
-1. PWA manifest и service worker.
-2. Offline-friendly сценарии для задач и привычек.
-3. Push-уведомления.
-4. iOS-версию с переиспользованием backend, базы данных и продуктовой логики.

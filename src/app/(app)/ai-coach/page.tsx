@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { ModulePreview } from "@/components/layout/module-preview";
 
 const plannedItems = [
   "Помощь с формулировкой цели.",
@@ -11,21 +12,16 @@ export default function AiCoachPage() {
   return (
     <>
       <PageHeader
-        title="AI Coach"
-        description="Раздел будущего AI-помощника для целей, задач, привычек и следующего шага."
+        title="AI Ассистент"
+        description="Legacy route: в UI используется название “AI Ассистент”."
       />
-      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
-        <div className="rounded-lg border border-border bg-surface p-6">
-          <p className="text-sm font-medium text-muted">Status: planned</p>
-          <ul className="mt-5 grid gap-3 text-muted sm:grid-cols-2">
-            {plannedItems.map((item) => (
-              <li className="rounded-md border border-border bg-background p-4" key={item}>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <ModulePreview
+        description="AI Ассистент предлагает один практический следующий шаг через будущие backend-only AI calls."
+        items={plannedItems}
+        metric="1 следующий шаг"
+        progress={38}
+        title="Каркас AI Ассистента"
+      />
     </>
   );
 }

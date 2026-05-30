@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const publicLinks = [
-  { href: "/auth", label: "Вход" },
+  { href: "/pricing", label: "Тарифы" },
+  { href: "/login", label: "Вход" },
   { href: "/register", label: "Регистрация" },
-  { href: "/onboarding", label: "Onboarding" },
-  { href: "/dashboard", label: "Dashboard" },
 ];
 
 type PublicShellProps = {
@@ -18,11 +18,16 @@ export function PublicShell({ children }: PublicShellProps) {
       <header className="border-b border-border bg-surface/85 px-5 py-4 backdrop-blur sm:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link className="inline-flex w-fit flex-col" href="/">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
-              LifeOS
-            </span>
+            <Image
+              alt="LIFERA"
+              className="h-6 w-auto dark:invert"
+              height={145}
+              priority
+              src="/brand/lifera-wordmark.svg"
+              width={661}
+            />
             <span className="text-sm text-muted">
-              Adult Gamified Personal OS
+              Personal ecosystem for goals, challenges and progress
             </span>
           </Link>
 
@@ -32,7 +37,7 @@ export function PublicShell({ children }: PublicShellProps) {
           >
             {publicLinks.map((item) => (
               <Link
-                className="rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-indigo-300 hover:text-foreground"
+                className="rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-primary/30 hover:text-foreground"
                 href={item.href}
                 key={item.href}
               >
