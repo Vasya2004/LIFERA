@@ -10,6 +10,30 @@ goal -> challenge or habit -> progress -> XP -> level -> achievements -> AI reco
 
 Lifera is not a task manager or calendar-first app. Habits in Lifera are regular rituals for leveling up life areas, not a generic habit tracker.
 
+## Production
+
+| Item | Value |
+| --- | --- |
+| **Status** | **Production launch green** |
+| **Production URL** | [https://lifera.app](https://lifera.app) |
+| **Hosting** | Vercel (MVP deployed) |
+| **Custom domain** | `lifera.app` (primary) |
+| **Vercel alias** | `lifera.vercel.app` (optional) |
+| **Database / Auth** | Supabase |
+
+Supabase **Authentication → URL configuration** (production):
+
+- **Site URL:** `https://lifera.app`
+- **Redirect URLs:** `https://lifera.app/**`, `https://*.vercel.app/**` (preview)
+
+Production smoke (passed):
+
+```bash
+SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs
+```
+
+Deploy details: `docs/DEPLOYMENT.md`.
+
 ## Stack
 
 - Next.js 16 App Router
@@ -280,7 +304,7 @@ Ultra (MVP): same server access as Pro; advanced AI/analytics features marked **
 
 Demo Pro/Ultra: `/plan` + `POST /api/subscription/activate-demo` when `DEMO_PREMIUM_ENABLED=true`. Subscription schema keeps `provider` fields for Stripe, ЮKassa or another payment provider later.
 
-Architecture and flow maps: `docs/PRODUCT_FLOW.md`, `docs/TECH_ARCHITECTURE.md`.
+Architecture and flow maps: `docs/PRODUCT_FLOW.md`, `docs/TECH_ARCHITECTURE.md`, `docs/DEPLOYMENT.md`.
 
 ## Production deploy checklist
 
@@ -293,7 +317,7 @@ Architecture and flow maps: `docs/PRODUCT_FLOW.md`, `docs/TECH_ARCHITECTURE.md`.
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | server-only; never expose to client |
 | `DEMO_PREMIUM_ENABLED` | yes | **`false`** in production and preview |
 | `OPENAI_API_KEY` | no | reserved for future LLM provider |
-| `NEXT_PUBLIC_SITE_URL` | no | production URL for OG metadata (e.g. `https://yourdomain.com`) |
+| `NEXT_PUBLIC_SITE_URL` | no | production URL for OG metadata (`https://lifera.app`) |
 
 Build settings:
 
@@ -307,8 +331,8 @@ Build settings:
 1. Apply migrations **0001 → 0006** in order (SQL Editor or `SUPABASE_DB_URL` scripts).
 2. Confirm **RLS enabled** on all personal tables.
 3. **Authentication → URL configuration:**
-   - Site URL: production domain
-   - Redirect URLs: production domain + Vercel preview pattern if needed (`https://*.vercel.app/**`)
+   - Site URL: `https://lifera.app`
+   - Redirect URLs: `https://lifera.app/**`, `https://*.vercel.app/**` (preview)
 4. Decide **email confirmation** on/off for MVP launch.
 5. Review auth email templates later.
 
@@ -327,7 +351,11 @@ npm run dev
 node scripts/smoke.mjs
 ```
 
-Without dev server, smoke still checks env, Supabase tables, and stage readiness scripts. Route checks require `npm run dev` or `SMOKE_BASE_URL=https://your-preview.vercel.app node scripts/smoke.mjs`.
+Without dev server, smoke still checks env, Supabase tables, and stage readiness scripts. Route checks require `npm run dev` or:
+
+```bash
+SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs
+```
 
 Optional E2E (Playwright, slower):
 
@@ -363,7 +391,9 @@ npm run build
 
 ## Domain Connection
 
-In Vercel:
+Production domain **lifera.app** is connected and verified (SSL, auth redirects, smoke).
+
+In Vercel (for future domains):
 
 1. Open Project Settings -> Domains.
 2. Add your domain.

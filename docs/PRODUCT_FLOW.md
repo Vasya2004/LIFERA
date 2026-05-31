@@ -57,6 +57,21 @@ Legacy-маршруты `/tasks`, `/calendar`, `/projects`, `/actions` наме�
 
 После регистрации middleware направляет незавершивших onboarding на `/onboarding`. После завершения — на `/dashboard`.
 
+## Production flow (verified)
+
+Production на [https://lifera.app](https://lifera.app) проверен end-to-end:
+
+```text
+landing (/) → register → onboarding → dashboard
+  → goals / challenges / habits / progress / skills / health / finance / plan
+```
+
+- Auth redirects работают через `lifera.app` (`/dashboard` → `/login?next=…`).
+- Demo Pro/Ultra отключён на production (`DEMO_PREMIUM_ENABLED=false`, `activate-demo` → 403).
+- Smoke: `SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs` — passed.
+
+Deploy reference: `docs/DEPLOYMENT.md`.
+
 **Stage 2:** лендинг (`/`) объясняет ценность и ведёт на `/register` или `/pricing`. Auth после входа проверяет `onboarding_completed` и направляет в `/onboarding` или `/dashboard`. Onboarding идемпотентен: повторный submit не создаёт дубли целей/челленджей.
 
 **Stage 3:** `/goals` и `/challenges` — полноценное ядро (квесты, миссии, шаги). Завершение шага через `POST /api/challenges/:id/stages/:stageId/complete` начисляет XP один раз (`xp_transactions` unique по `user_id + source_type + source_id`), обновляет level (`floor(xp_total/500)+1`), прогресс миссии и цели, проверяет achievements server-side.
