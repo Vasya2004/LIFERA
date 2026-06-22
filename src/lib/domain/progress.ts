@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { todayIsoDate, rollingLast7Days } from "@/lib/utils/date";
 import { calculateLevel } from "@/lib/domain/gamification";
 import { LIFE_AREA_LABELS } from "@/lib/domain/labels";
 import { getProgressHistoryCutoff, getUserPlan } from "@/lib/domain/subscription";
@@ -22,6 +23,30 @@ export type ProgressLifeArea = {
 export type ProgressInsight = {
   content: string;
   title: string;
+};
+
+export type RecentProgressEvent = {
+  amount: number | null;
+  description: string;
+  id: string;
+  occurredAt: string;
+  title: string;
+  type: "achievement" | "habit" | "stage" | "xp";
+};
+
+export type ProgressRecommendation = {
+  content: string;
+  ctaHref: string;
+  ctaLabel: string;
+  title: string;
+};
+
+export { XP_SOURCE_LABELS } from "@/lib/domain/labels";
+
+export const LIFE_AREA_STATUS_LABELS: Record<LifeAreaStatus, string> = {
+  declining: "Проседает",
+  rising: "Растёт",
+  stable: "Стабильно",
 };
 
 export type ProgressData = {
@@ -95,6 +120,8 @@ export type ProgressData = {
     title: string;
     xp_awarded: number;
   }>;
+  recentEvents: RecentProgressEvent[];
+  recommendation: ProgressRecommendation;
   recentXpTransactions: Array<{
     amount: number;
     created_at: string;
@@ -140,20 +167,6 @@ function weekStartIsoDate() {
   date.setDate(date.getDate() - day + 1);
   date.setHours(0, 0, 0, 0);
   return date.toISOString().slice(0, 10);
-}
-
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function rollingLast7Days() {
-  const days: string[] = [];
-  for (let offset = 6; offset >= 0; offset -= 1) {
-    const date = new Date();
-    date.setDate(date.getDate() - offset);
-    days.push(date.toISOString().slice(0, 10));
-  }
-  return days;
 }
 
 function dayLabel(isoDate: string) {
@@ -257,14 +270,114 @@ export function buildProgressInsight(input: {
   if (weekly.xp > 0 && (weekly.habitCompletions > 0 || weekly.challengeStagesCompleted > 0)) {
     return {
       content:
-        "На этой неделе есть движение: XP, ритуалы или шаги миссий. Закрепите текущий ритм — повторяемость сильнее разовых рывков.",
+        "На этой неделе есть движение: XP, ритуалы или шаги привычек. Закрепите текущий ритм — повторяемость сильнее разовых рывков.",
       title: "Траектория стабильна",
     };
   }
 
   return {
     content:
-      "Продолжайте связку цель → миссия или ритуал → XP. Даже небольшое ежедневное действие даёт измеримую динамику в аналитике.",
+      "Продолжайте связку цель → привычка или ритуал → XP. Даже небольшое ежедневное действие даёт измеримую динамику в аналитике.",
+    title: "Держите темп",
+  };
+}
+
+export function buildRecentProgressFeed(input: {
+  recentXpTransactions: ProgressData["recentXpTransactions"];
+}): RecentProgressEvent[] {
+  const events: RecentProgressEvent[] = [];
+
+  for (const transaction of input.recentXpTransactions) {
+    let title = "Получен опыт";
+    let type: RecentProgressEvent["type"] = "xp";
+
+    if (transaction.source_type === "challenge_stage") {
+      title = "Завершён этап";
+      type = "stage";
+    } else if (transaction.source_type === "habit_log") {
+      title = "Выполнен ритуал";
+      type = "habit";
+    } else if (transaction.source_type === "achievement") {
+      title = "Открыто достижение";
+      type = "achievement";
+    }
+
+    events.push({
+      amount: transaction.amount,
+      description: transaction.reason,
+      id: transaction.id,
+      occurredAt: transaction.created_at,
+      title,
+      type,
+    });
+  }
+
+  return events
+    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+    .slice(0, 8);
+}
+
+export function buildProgressRecommendation(input: {
+  challenges: ProgressData["challenges"];
+  goals: ProgressData["goals"];
+  habits: ProgressData["habits"];
+  lifeAreas: ProgressLifeArea[];
+  weekly: ProgressData["weekly"];
+}): ProgressRecommendation {
+  const { challenges, goals, habits, lifeAreas, weekly } = input;
+
+  if (weekly.xp === 0) {
+    return {
+      content:
+        "На этой неделе пока нет активности. Вернитесь к фокусу дня и выполните одно простое действие.",
+      ctaHref: "/dashboard",
+      ctaLabel: "Продолжить фокус",
+      title: "Начните с одного действия",
+    };
+  }
+
+  if (habits.active > 0 && habits.completedThisWeek === 0) {
+    return {
+      content:
+        "Ритуалы созданы, но на этой неделе без выполнений. Отметьте один ритуал — это даст опыт и вернёт ритм.",
+      ctaHref: "/habits",
+      ctaLabel: "Открыть ритуалы",
+      title: "Вернитесь к ритуалам",
+    };
+  }
+
+  if (challenges.active > 0 && weekly.challengeStagesCompleted === 0) {
+    return {
+      content:
+        "Активные привычки есть, но этапы на этой неделе не завершались. Откройте привычку и закройте ближайший шаг.",
+      ctaHref: "/challenges",
+      ctaLabel: "Открыть привычки",
+      title: "Продолжите привычку",
+    };
+  }
+
+  const decliningAreas = lifeAreas.filter(
+    (area) =>
+      area.status === "declining" &&
+      (area.goalsCount > 0 || area.challengesCount > 0 || area.habitsCount > 0),
+  );
+  const unevenGoals = goals.active >= 3 && goals.averageProgress < 25;
+
+  if (decliningAreas.length >= 2 || unevenGoals) {
+    return {
+      content:
+        "Сферы развиваются неравномерно. Сфокусируйтесь на одной цели и связанной привычки или ритуале.",
+      ctaHref: "/goals",
+      ctaLabel: "Открыть цели",
+      title: "Сбалансируйте цели",
+    };
+  }
+
+  return {
+    content:
+      "На этой неделе система растёт. Продолжайте текущий фокус — повторяемость важнее разовых рывков.",
+    ctaHref: "/dashboard",
+    ctaLabel: "Продолжить фокус",
     title: "Держите темп",
   };
 }
@@ -594,6 +707,23 @@ export async function getProgressData(
     xp: xpWeekly,
   };
 
+  const recentXpTransactions = xpTransactions.slice(0, 8).map((item) => ({
+    amount: Number(item.amount ?? 0),
+    created_at: item.created_at,
+    id: item.id,
+    reason: item.reason,
+    source_type: item.source_type,
+  }));
+
+  const recentEvents = buildRecentProgressFeed({ recentXpTransactions });
+  const recommendation = buildProgressRecommendation({
+    challenges: challengesAnalytics,
+    goals: goalsAnalytics,
+    habits: habitsAnalytics,
+    lifeAreas,
+    weekly,
+  });
+
   return {
     achievements: {
       nextLocked,
@@ -617,18 +747,14 @@ export async function getProgressData(
     profile: {
       level: levelMeta.level,
       life_score: Number(profile.life_score ?? 0),
-      levelProgressPercent: Math.round((xpTotal % 500) / 5),
+      levelProgressPercent: levelMeta.levelProgress,
       xpToNextLevel: levelMeta.xpToNextLevel,
       xp_total: xpTotal,
     },
+    recentEvents,
     recentHabitLogs,
-    recentXpTransactions: xpTransactions.slice(0, 8).map((item) => ({
-      amount: Number(item.amount ?? 0),
-      created_at: item.created_at,
-      id: item.id,
-      reason: item.reason,
-      source_type: item.source_type,
-    })),
+    recommendation,
+    recentXpTransactions,
     subscription: {
       historyDays: historyCutoff ? 7 : null,
       historyLimited: Boolean(historyCutoff),

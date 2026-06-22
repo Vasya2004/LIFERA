@@ -1,10 +1,25 @@
 # UI Tokens: Lifera
 
+## Терминология UI
+
+Presentation labels для статусов, сфер жизни, источников опыта и планов — в `src/lib/domain/labels.ts`. В интерфейсе: **опыт** (не XP), **уровень**, **индекс жизни**, **Ассистент Lifera**.
+
 ## Назначение
 
 Этот документ фиксирует базовый theme token baseline для Lifera Core MVP. Токены нужны, чтобы public routes, internal app shell и будущие экраны использовали одну визуальную основу в направлении Adult Gamified Personal OS.
 
 Это не финальная дизайн-система. Это минимальная light/dark-ready база для аккуратной разработки UI без подключения shadcn/ui, next-themes или сторонних библиотек.
+
+## Stage 1 — Premium dark command center (2026)
+
+Dark-first layered graphite palette in `src/app/globals.css`:
+
+- `--background: #070707`, `--surface: #0d0d0d`, `--surface-muted: #141414`, `--surface-elevated: #1b1b1b`
+- `--primary: #ff5a1f` — rare action/progress accent
+- `--assistant`, `--assistant-subtle`, `--assistant-border` — только для ассистента
+- Utility classes: `.app-shell-bg`, `.app-page`, `.metric-value`, `.assistant-surface`
+
+App shell: compact sidebar with orange active edge, simplified topbar, mobile «Ещё» order per PRODUCT_FLOW.
 
 ## Theme tokens
 

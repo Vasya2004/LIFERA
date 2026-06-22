@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { awardXpOnce, checkAchievements } from "@/lib/domain/gamification";
+import { todayIsoDate } from "@/lib/utils/date";
+import { awardXpOnce, calculateLevel, checkAchievements } from "@/lib/domain/gamification";
 import { PlanLimitError } from "@/lib/domain/plan-limit-error";
 import { assertCanActivateHabit } from "@/lib/domain/subscription";
 import type { HabitFrequency, HabitStatus, LifeArea } from "@/lib/domain/types";
@@ -15,10 +16,6 @@ export type HabitInput = {
   title?: string;
   xp_reward?: number;
 };
-
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function yesterdayIsoDate() {
   const yesterday = new Date();
@@ -217,7 +214,7 @@ export async function completeHabit(
 
   const xp = await awardXpOnce({
     amount: xpAwarded,
-    reason: `Ритуал прокачки: ${habit.title}`,
+    reason: `Привычка: ${habit.title}`,
     sourceId: log.id,
     sourceType: "habit_log",
     supabase,
@@ -250,4 +247,108 @@ export async function completeHabit(
     xp,
     xpAwarded: xp.awarded ? xpAwarded : 0,
   };
+}
+
+export async function uncompleteHabit(
+  supabase: SupabaseClient,
+  userId: string,
+  habitId: string,
+) {
+  const today = todayIsoDate();
+
+  const { data: habit, error: habitError } = await supabase
+    .from("habits")
+    .select("*")
+    .eq("id", habitId)
+    .eq("user_id", userId)
+    .single();
+
+  if (habitError || !habit) {
+    throw new Error(habitError?.message ?? "Habit not found.");
+  }
+
+  const { data: log, error: logError } = await supabase
+    .from("habit_logs")
+    .delete()
+    .eq("habit_id", habitId)
+    .eq("user_id", userId)
+    .eq("completed_on", today)
+    .select("*")
+    .maybeSingle();
+
+  if (logError) {
+    throw new Error(logError.message);
+  }
+
+  if (!log) {
+    return { habit, log: null, undone: false };
+  }
+
+  const xpReverted = Number(log.xp_awarded ?? 0);
+
+  if (xpReverted > 0) {
+    await supabase
+      .from("xp_transactions")
+      .delete()
+      .eq("source_id", log.id)
+      .eq("source_type", "habit_log")
+      .eq("user_id", userId);
+
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("xp_total")
+      .eq("user_id", userId)
+      .single();
+
+    if (profile) {
+      const newTotal = Math.max(0, Number(profile.xp_total ?? 0) - xpReverted);
+      const { level } = calculateLevel(newTotal);
+      await supabase
+        .from("user_profiles")
+        .update({ level, xp_total: newTotal })
+        .eq("user_id", userId);
+    }
+  }
+
+  const nextStreak = Math.max(0, Number(habit.streak_current ?? 0) - 1);
+
+  const { data: updatedHabit, error: updateError } = await supabase
+    .from("habits")
+    .update({ streak_current: nextStreak })
+    .eq("id", habitId)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  return { habit: updatedHabit, log, undone: true, xpReverted };
+}
+
+export async function deleteHabit(
+  supabase: SupabaseClient,
+  userId: string,
+  habitId: string,
+) {
+  const { error: logsError } = await supabase
+    .from("habit_logs")
+    .delete()
+    .eq("habit_id", habitId)
+    .eq("user_id", userId);
+
+  if (logsError) {
+    throw new Error(logsError.message);
+  }
+
+  const { error } = await supabase
+    .from("habits")
+    .delete()
+    .eq("id", habitId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

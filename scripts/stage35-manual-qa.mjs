@@ -7,6 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 
+import { completeOnboardingWizardToDashboard } from "./lib/onboarding-wizard.mjs";
+
 const root = process.cwd();
 const envPath = path.join(root, ".env.local");
 
@@ -85,14 +87,7 @@ async function main() {
     pass("Register → Onboarding", page.url());
 
     // 2. Onboarding
-    await page.getByRole("textbox", { name: "Название цели" }).fill(goalTitle);
-    await page
-      .getByRole("checkbox", {
-        name: "Создать стартовую цель, челлендж с этапами и открыть Dashboard с моими данными.",
-      })
-      .check();
-    await page.getByRole("button", { name: "Запустить Life RPG-систему" }).click();
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+    await completeOnboardingWizardToDashboard(page, { goalTitle });
     pass("Onboarding → Dashboard", page.url());
 
     // Resolve user id via admin list (recent user by email)
@@ -167,7 +162,7 @@ async function main() {
     if (page.url().includes(challenge.id)) pass("Challenge detail opens", page.url());
     else fail("Challenge detail opens", page.url());
 
-    const completeButton = page.getByRole("button", { name: "Завершить шаг" });
+    const completeButton = page.getByRole("button", { name: "Завершить этап" });
     await completeButton.waitFor({ timeout: 10000 });
 
     // 4. Complete stage (first time)

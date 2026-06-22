@@ -7,12 +7,13 @@ type CardProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 const variantClasses: Record<CardVariant, string> = {
-  default: "border-border bg-surface shadow-[var(--shadow-sm)]",
-  muted: "border-border bg-surface-muted shadow-none",
-  elevated: "border-border-strong bg-surface-elevated shadow-[var(--shadow-md)]",
-  highlight: "border-border-strong bg-surface-elevated shadow-[var(--shadow-md)]",
+  default: "rounded-2xl border border-border bg-surface shadow-[var(--shadow-sm)]",
+  muted: "rounded-2xl border border-border bg-surface-muted shadow-none",
+  elevated: "rounded-2xl border border-border-strong bg-surface-elevated shadow-[var(--shadow-md)]",
+  highlight:
+    "rounded-2xl border border-primary/20 bg-surface shadow-[0_0_24px_rgba(255,90,31,0.1)]",
   interactive:
-    "border-border bg-surface shadow-[var(--shadow-sm)] transition-[background-color,border-color,box-shadow] duration-200 ease-out hover:border-border-strong hover:bg-surface-elevated hover:shadow-[var(--shadow-md)]",
+    "rounded-2xl border border-border bg-surface shadow-[var(--shadow-sm)] transition-[background-color,border-color,box-shadow] duration-200 ease-out hover:border-border-strong hover:bg-surface-elevated hover:shadow-[0_0_24px_rgba(255,90,31,0.08)]",
 };
 
 export function Card({
@@ -23,7 +24,7 @@ export function Card({
   return (
     <div
       className={[
-        "rounded-[var(--radius-card)] border p-5 sm:p-6",
+        "p-5 sm:p-6",
         variantClasses[variant],
         className,
       ].join(" ")}

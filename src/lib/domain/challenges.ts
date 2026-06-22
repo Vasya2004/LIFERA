@@ -25,7 +25,7 @@ export async function insertStarterStagesForChallenge({
 }) {
   const stages = starterStages.map((stageTitle, index) => ({
     challenge_id: challengeId,
-    description: `Этап ${index + 1} челленджа "${challengeTitle}".`,
+    description: `Этап ${index + 1} плана цели "${challengeTitle}".`,
     order_index: index + 1,
     progress_value: Math.round(100 / starterStages.length),
     status: index === 0 ? "active" : "locked",
@@ -88,12 +88,22 @@ export async function createChallengeWithStages({
     throw new Error(error.message);
   }
 
-  await insertStarterStagesForChallenge({
-    challengeId: challenge.id,
-    challengeTitle: title,
-    supabase,
-    userId,
-  });
+  try {
+    await insertStarterStagesForChallenge({
+      challengeId: challenge.id,
+      challengeTitle: title,
+      supabase,
+      userId,
+    });
+  } catch (stageError) {
+    await supabase
+      .from("challenges")
+      .delete()
+      .eq("id", challenge.id)
+      .eq("user_id", userId);
+
+    throw stageError;
+  }
 
   return challenge;
 }
@@ -176,7 +186,7 @@ export async function completeStage({
 
   const xp = await awardXpOnce({
     amount: Number(updatedStage.xp_reward),
-    reason: `Этап челленджа: ${updatedStage.title}`,
+    reason: `Этап плана цели: ${updatedStage.title}`,
     sourceId: updatedStage.id,
     sourceType: "challenge_stage",
     supabase: db,

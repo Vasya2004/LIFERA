@@ -5,7 +5,8 @@ export type LifeArea =
   | "education"
   | "relationships"
   | "creativity"
-  | "projects";
+  | "projects"
+  | "skills";
 
 export type Plan = "free" | "pro" | "ultra";
 
@@ -35,7 +36,9 @@ export type UserProfile = {
   selected_life_areas: LifeArea[];
   plan: Plan;
   intended_plan: Plan | null;
+  primary_goal_id: string | null;
   onboarding_completed: boolean;
+  onboarding_completed_at: string | null;
   preferred_theme: "system" | "light" | "dark";
   created_at: string;
   updated_at: string;
@@ -127,6 +130,24 @@ export type HabitLog = {
   completed_on: string;
   xp_awarded: number;
   created_at: string;
+};
+
+export type WishStatus = "wanted" | "acquired" | "archived";
+
+export type Wish = {
+  id: string;
+  user_id: string;
+  linked_goal_id: string | null;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  category: string | null;
+  target_amount: number | null;
+  current_amount: number | null;
+  status: WishStatus;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type SkillStatus = "active" | "archived";

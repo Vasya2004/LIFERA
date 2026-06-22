@@ -1,8 +1,9 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonSupabaseError } from "@/lib/api/errors";
-import { jsonError, jsonOk } from "@/lib/api/response";
+import { jsonError, jsonOk, parseJsonBody } from "@/lib/api/response";
 import { jsonPlanLimitError } from "@/lib/api/plan-limit";
 import { assertCanCreateGoal } from "@/lib/domain/subscription";
+import { setPrimaryGoal } from "@/lib/domain/primary-goal";
 
 export async function GET() {
   const { error, supabase, user } = await getCurrentUser();
@@ -37,7 +38,13 @@ export async function POST(request: Request) {
     return jsonPlanLimitError(gate.reason ?? "Достигнут лимит целей на Free-плане.");
   }
 
-  const body = await request.json();
+  const parsed = await parseJsonBody(request);
+
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as Record<string, unknown>;
   const title = String(body.title ?? "").trim();
 
   if (!title) {
@@ -61,6 +68,17 @@ export async function POST(request: Request) {
     return jsonSupabaseError("goals:POST", insertError, 400, "Не удалось создать цель.");
   }
 
+  if (body.is_primary === true) {
+    await setPrimaryGoal(supabase, user.id, data.id);
+  }
+
+  if (typeof body.linked_wish_id === "string" && body.linked_wish_id) {
+    await supabase
+      .from("wishes")
+      .update({ linked_goal_id: data.id })
+      .eq("id", body.linked_wish_id)
+      .eq("user_id", user.id);
+  }
+
   return jsonOk({ goal: data }, 201);
 }
-

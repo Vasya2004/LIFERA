@@ -13,8 +13,11 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Мобильная навигация"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 px-2 py-2 backdrop-blur md:hidden"
-      style={{ ["--mobile-nav-height" as string]: "4.5rem" }}
+      className="mobile-nav-surface fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-2 backdrop-blur md:hidden"
+      style={{
+        ["--mobile-nav-height" as string]:
+          "calc(4.5rem + env(safe-area-inset-bottom, 0px))",
+      }}
     >
       <div className="grid grid-cols-5 gap-1">
         {mobilePrimaryNavigationItems.map((item) => {

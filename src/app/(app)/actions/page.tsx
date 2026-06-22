@@ -1,4 +1,5 @@
 import { ModulePreview } from "@/components/layout/module-preview";
+import { PageContent } from "@/components/layout/page-content";
 import { PageHeader } from "@/components/layout/page-header";
 import { Tabs } from "@/components/ui/tabs";
 
@@ -16,7 +17,7 @@ export default function ActionsPage() {
         title="Действия"
         description="Ежедневные задачи и привычки, которые двигают цели, проекты и прогресс."
       />
-      <section className="mx-auto max-w-6xl px-5 pt-8 sm:px-8">
+      <PageContent>
         <Tabs
           items={[
             { active: true, label: "Задачи" },
@@ -24,7 +25,7 @@ export default function ActionsPage() {
             { label: "Завершенные" },
           ]}
         />
-      </section>
+      </PageContent>
       <ModulePreview
         description="Действия объединяют разовые задачи и повторяемые привычки в одном рабочем разделе."
         items={plannedItems}

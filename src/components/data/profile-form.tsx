@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast-provider";
+import { handleMutationError, showMutationSuccess } from "@/lib/ui/feedback";
 
 type ProfileFormProps = {
   avatarUrl: string | null;
@@ -13,12 +15,17 @@ type ProfileFormProps = {
 
 export function ProfileForm({ avatarUrl, fullName }: ProfileFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(formData: FormData) {
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
-    setMessage(null);
+    setError(null);
 
     const response = await fetch("/api/me", {
       body: JSON.stringify({
@@ -33,11 +40,12 @@ export function ProfileForm({ avatarUrl, fullName }: ProfileFormProps) {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => null);
-      setMessage(payload?.error ?? "Не удалось обновить профиль.");
+      handleMutationError(toast, payload, "Не удалось обновить профиль.");
+      setError(payload?.error ?? "Не удалось обновить профиль.");
       return;
     }
 
-    setMessage("Профиль обновлен.");
+    showMutationSuccess(toast, "Изменения сохранены");
     router.refresh();
   }
 
@@ -45,10 +53,10 @@ export function ProfileForm({ avatarUrl, fullName }: ProfileFormProps) {
     <form action={submit} className="mt-6 grid gap-4">
       <Input defaultValue={fullName ?? ""} label="Имя" name="full_name" />
       <Input defaultValue={avatarUrl ?? ""} label="Avatar URL" name="avatar_url" />
-      <Button loading={loading} type="submit">
+      {error ? <p className="text-sm text-danger-foreground">{error}</p> : null}
+      <Button loading={loading} loadingLabel="Сохраняем..." type="submit">
         Сохранить профиль
       </Button>
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
     </form>
   );
 }

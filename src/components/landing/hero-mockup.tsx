@@ -31,7 +31,7 @@ export function HeroMockup() {
               Навигация
             </p>
             <ul className="space-y-2 text-xs text-[var(--landing-text-secondary)]">
-              {["Главная", "Цели", "Челленджи", "Прогресс", "AI Ассистент"].map((item, index) => (
+              {["Главная", "Цели", "Привычки", "Навыки", "AI Ассистент"].map((item, index) => (
                 <li
                   className={[
                     "rounded-lg px-2.5 py-2",
@@ -64,7 +64,7 @@ export function HeroMockup() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--landing-accent-2)]">
-                      Активная миссия
+                      Активная привычка
                     </p>
                     <p className="mt-2 text-sm font-semibold text-[var(--landing-text)]">
                       7 дней системного старта
@@ -120,7 +120,7 @@ export function HeroMockup() {
                     AI Ассистент
                   </p>
                   <p className="mt-1 text-sm font-medium leading-[1.45] text-[var(--landing-text)]">
-                    Завершите текущий шаг челленджа — это даст XP и откроет следующий milestone.
+                    Завершите текущую привычку — это даст XP и укрепит недельный прогресс.
                   </p>
                 </div>
               </div>

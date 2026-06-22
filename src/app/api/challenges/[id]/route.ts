@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonSupabaseError } from "@/lib/api/errors";
 import { jsonPlanLimitError } from "@/lib/api/plan-limit";
-import { jsonError, jsonOk } from "@/lib/api/response";
+import { jsonError, jsonOk, parseJsonBody } from "@/lib/api/response";
 import { assertCanActivateChallenge } from "@/lib/domain/subscription";
 
 type Params = {
@@ -16,7 +16,13 @@ export async function PUT(request: Request, { params }: Params) {
   }
 
   const { id } = await params;
-  const body = await request.json();
+  const parsed = await parseJsonBody(request);
+
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as Record<string, unknown>;
   const updates: Record<string, unknown> = {};
 
   for (const key of ["description", "difficulty", "duration_days", "goal_id", "status", "title"]) {

@@ -1,7 +1,9 @@
+import { revalidatePath } from "next/cache";
+
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonPlanLimitError } from "@/lib/api/plan-limit";
-import { jsonError, jsonOk } from "@/lib/api/response";
-import { archiveHabit, updateHabit } from "@/lib/domain/habits";
+import { jsonError, jsonOk, parseJsonBody } from "@/lib/api/response";
+import { archiveHabit, deleteHabit, updateHabit, type HabitInput } from "@/lib/domain/habits";
 import { isPlanLimitError } from "@/lib/domain/plan-limit-error";
 
 type Params = {
@@ -16,10 +18,18 @@ export async function PUT(request: Request, { params }: Params) {
   }
 
   const { id } = await params;
-  const body = await request.json();
+  const parsed = await parseJsonBody(request);
+
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as HabitInput & { status?: "active" | "archived" };
 
   try {
     const habit = await updateHabit(supabase, user.id, id, body);
+    revalidatePath("/habits");
+    revalidatePath("/dashboard");
     return jsonOk({ habit });
   } catch (updateError) {
     if (isPlanLimitError(updateError)) {
@@ -30,7 +40,7 @@ export async function PUT(request: Request, { params }: Params) {
   }
 }
 
-export async function DELETE(_: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
   const { error, supabase, user } = await getCurrentUser();
 
   if (!supabase || !user) {
@@ -38,11 +48,21 @@ export async function DELETE(_: Request, { params }: Params) {
   }
 
   const { id } = await params;
+  const url = new URL(request.url);
+  const hard = url.searchParams.get("hard") === "true";
 
   try {
+    if (hard) {
+      await deleteHabit(supabase, user.id, id);
+      revalidatePath("/habits");
+      revalidatePath("/dashboard");
+      return jsonOk({ deleted: true });
+    }
     const habit = await archiveHabit(supabase, user.id, id);
+    revalidatePath("/habits");
+    revalidatePath("/dashboard");
     return jsonOk({ habit });
   } catch (archiveError) {
-    return jsonError(archiveError instanceof Error ? archiveError.message : "Archive failed.", 400);
+    return jsonError(archiveError instanceof Error ? archiveError.message : "Operation failed.", 400);
   }
 }

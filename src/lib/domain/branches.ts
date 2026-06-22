@@ -8,6 +8,13 @@ export type BranchActivities = {
   habits: Habit[];
 };
 
+export type BranchRecommendation = {
+  content: string;
+  ctaHref: string;
+  ctaLabel: string;
+  title: string;
+};
+
 export function sanitizeBranchNote(note: string | null | undefined, maxLength = 500): string | null {
   if (note == null) {
     return null;

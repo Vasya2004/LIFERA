@@ -19,8 +19,8 @@ const cardCopy = {
   },
   register: {
     badge: "Доступ к Lifera",
-    divider: "Вход по email",
-    subtitle: "Запусти систему целей, челленджей, привычек и прогресса.",
+    divider: "Регистрация по email",
+    subtitle: "Запусти систему целей, привычек, навыков и прогресса.",
     title: "Создать аккаунт",
   },
 };
@@ -36,8 +36,10 @@ const decorativeCopy = {
 
 const sharedDecorative = {
   topLeft: "LIFERA // СИСТЕМА ПРОГРЕССА",
-  vertical: "ЦЕЛИ // ПРОГРЕСС // AI",
+  vertical: "ЦЕЛИ // ПРОГРЕСС // АССИСТЕНТ",
 };
+
+const showDevBadges = process.env.NODE_ENV !== "production";
 
 export function AuthShell({ children, mode }: AuthShellProps) {
   const content = cardCopy[mode];
@@ -68,10 +70,12 @@ export function AuthShell({ children, mode }: AuthShellProps) {
           {decorative.bottomLeft}
         </span>
 
-        <div className="auth-microcopy auth-microcopy-top-right">
-          <span className="auth-pill-muted">v0.1</span>
-          <span className="auth-pill-muted">MVP</span>
-        </div>
+        {showDevBadges ? (
+          <div className="auth-microcopy auth-microcopy-top-right">
+            <span className="auth-pill-muted">v0.1</span>
+            <span className="auth-pill-muted">MVP</span>
+          </div>
+        ) : null}
 
         <span className="auth-microcopy auth-microcopy-vertical">
           {sharedDecorative.vertical}

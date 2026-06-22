@@ -1,9 +1,10 @@
+import { PageContent } from "@/components/layout/page-content";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProgressLoading() {
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:px-8">
+    <PageContent>
       <div className="grid gap-3">
         <Skeleton className="h-9 w-48" />
         <Skeleton className="h-5 w-full max-w-2xl" />
@@ -20,6 +21,6 @@ export default function ProgressLoading() {
         <Skeleton className="h-6 w-40" />
         <Skeleton className="mt-5 h-24 w-full" />
       </Card>
-    </section>
+    </PageContent>
   );
 }

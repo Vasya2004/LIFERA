@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Тарифы",
-  description: "Free, Pro и Ultra — тарифы Lifera для целей, челленджей, привычек и AI-рекомендаций.",
+  description: "Free, Pro и Ultra — value-based тарифы Lifera для системы прогресса.",
 };
 
 export default function PricingPage() {

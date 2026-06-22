@@ -12,7 +12,7 @@ export function StatCard({ detail, label, progress, value }: StatCardProps) {
   return (
     <Card className="grid gap-3">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-3xl font-semibold tracking-tight text-foreground">{value}</p>
+      <p className="metric-value text-foreground">{value}</p>
       {detail ? <p className="text-sm text-muted-foreground">{detail}</p> : null}
       {typeof progress === "number" ? <Progress tone="primary" value={progress} /> : null}
     </Card>

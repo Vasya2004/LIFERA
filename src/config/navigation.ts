@@ -2,7 +2,8 @@ export type NavigationItem = {
   href: string;
   icon: string;
   label: string;
-  group: "main" | "core" | "areas" | "intelligence" | "system";
+  group: "main" | "core" | "motivation" | "intelligence" | "system";
+  disabled?: boolean;
   mobile?: boolean;
 };
 
@@ -25,13 +26,6 @@ export const navigationItems: NavigationItem[] = [
     mobile: true,
   },
   {
-    href: "/challenges",
-    icon: "challenge",
-    label: "Челленджи",
-    group: "core",
-    mobile: true,
-  },
-  {
     href: "/habits",
     icon: "ritual",
     label: "Привычки",
@@ -39,9 +33,15 @@ export const navigationItems: NavigationItem[] = [
     mobile: true,
   },
   {
-    href: "/progress",
-    icon: "progress",
-    label: "Прогресс",
+    href: "/health",
+    icon: "health",
+    label: "Здоровье",
+    group: "core",
+  },
+  {
+    href: "/finance",
+    icon: "wallet",
+    label: "Финансы",
     group: "core",
   },
   {
@@ -54,25 +54,20 @@ export const navigationItems: NavigationItem[] = [
     href: "/skills",
     icon: "spark",
     label: "Навыки",
-    group: "areas",
-  },
-  {
-    href: "/finance",
-    icon: "wallet",
-    label: "Финансы",
-    group: "areas",
-  },
-  {
-    href: "/health",
-    icon: "heart",
-    label: "Здоровье",
-    group: "areas",
+    group: "core",
+    mobile: true,
   },
   {
     href: "/ai-assistant",
     icon: "assistant",
-    label: "AI Ассистент",
+    label: "Ассистент",
     group: "intelligence",
+  },
+  {
+    href: planRouteHref,
+    icon: "billing",
+    label: "План",
+    group: "system",
   },
   {
     href: "/profile",
@@ -86,18 +81,12 @@ export const navigationItems: NavigationItem[] = [
     label: "Настройки",
     group: "system",
   },
-  {
-    href: planRouteHref,
-    icon: "billing",
-    label: "План",
-    group: "system",
-  },
 ];
 
 export const mobileNavigationItems = navigationItems.filter((item) => item.mobile);
 
 export const mobilePrimaryNavigationItems = navigationItems.filter((item) =>
-  ["/dashboard", "/goals", "/challenges", "/habits"].includes(item.href),
+  ["/dashboard", "/goals", "/habits", "/health"].includes(item.href),
 );
 
 export const mobileMoreNavigationItems = navigationItems.filter(
@@ -109,6 +98,14 @@ export const mobileMoreNavigationItems = navigationItems.filter(
 export function isNavigationActive(pathname: string, href: string): boolean {
   if (href === planRouteHref) {
     return pathname === planRouteHref || pathname === "/billing";
+  }
+
+  if (href === "/goals") {
+    return (
+      pathname === href ||
+      pathname.startsWith("/goals/") ||
+      pathname === "/wishes"
+    );
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);

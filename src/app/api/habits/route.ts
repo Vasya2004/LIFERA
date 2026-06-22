@@ -1,7 +1,9 @@
+import { revalidatePath } from "next/cache";
+
 import { getCurrentUser } from "@/lib/auth/session";
-import { jsonError, jsonOk } from "@/lib/api/response";
+import { jsonError, jsonOk, parseJsonBody } from "@/lib/api/response";
 import { jsonPlanLimitError } from "@/lib/api/plan-limit";
-import { createHabit, listHabits } from "@/lib/domain/habits";
+import { createHabit, listHabits, type HabitInput } from "@/lib/domain/habits";
 import { assertCanCreateHabit } from "@/lib/domain/subscription";
 
 export async function GET() {
@@ -26,7 +28,13 @@ export async function POST(request: Request) {
     return jsonError(error ?? "Unauthorized.", error === "Supabase is not configured." ? 503 : 401);
   }
 
-  const body = await request.json();
+  const parsed = await parseJsonBody(request);
+
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as HabitInput;
 
   const gate = await assertCanCreateHabit(supabase, user.id);
 
@@ -36,6 +44,8 @@ export async function POST(request: Request) {
 
   try {
     const habit = await createHabit(supabase, user.id, body);
+    revalidatePath("/habits");
+    revalidatePath("/dashboard");
     return jsonOk({ habit }, 201);
   } catch (createError) {
     return jsonError(createError instanceof Error ? createError.message : "Create failed.", 400);

@@ -1,48 +1,16 @@
+import Link from "next/link";
+
+import { ChallengeCreatePanel } from "@/components/challenges/challenge-create-panel";
+import { ChallengesList } from "@/components/challenges/challenges-list";
+import { ChallengesSummary } from "@/components/challenges/challenges-summary";
+import { ChallengeTemplatesSection } from "@/components/challenges/challenge-templates-section";
+import { ContinueMissionBlock } from "@/components/challenges/continue-mission-block";
+import { PageContent } from "@/components/layout/page-content";
 import { PageTitle } from "@/components/layout/page-title";
-import { ChallengeTemplateGrid } from "@/components/data/challenge-template-grid";
-import { CreateChallengeForm } from "@/components/data/create-challenge-form";
-import { ChallengeCard } from "@/components/ui/challenge-card";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getChallengesPageData } from "@/lib/domain/challenges-page";
-
-function ChallengeSection({
-  challenges,
-  emptyDescription,
-  title,
-}: {
-  challenges: Awaited<ReturnType<typeof getChallengesPageData>>["active"];
-  emptyDescription?: string;
-  title: string;
-}) {
-  if (challenges.length === 0) {
-    return emptyDescription ? (
-      <p className="text-sm text-muted-foreground">{emptyDescription}</p>
-    ) : null;
-  }
-
-  return (
-    <section className="grid gap-4">
-      <h2 className="text-xl font-semibold">{title}</h2>
-      {challenges.map((challenge) => (
-        <ChallengeCard
-          difficulty={challenge.difficulty}
-          durationDays={challenge.duration_days}
-          goalTitle={challenge.goalTitle}
-          href={`/challenges/${challenge.id}`}
-          isPremium={challenge.is_premium}
-          key={challenge.id}
-          nextStepTitle={challenge.nextStepTitle}
-          progress={Number(challenge.progress)}
-          status={challenge.status}
-          title={challenge.title}
-          xpRewardTotal={challenge.xp_reward_total}
-        />
-      ))}
-    </section>
-  );
-}
 
 export default async function ChallengesPage() {
   const { supabase, user } = await getCurrentUser();
@@ -54,21 +22,29 @@ export default async function ChallengesPage() {
       data = await getChallengesPageData(supabase, user.id);
     } catch (error) {
       loadError =
-        error instanceof Error ? error.message : "Не удалось загрузить челленджи.";
+        error instanceof Error ? error.message : "Не удалось загрузить привычки.";
     }
   }
 
-  const hasAny =
-    (data?.active.length ?? 0) +
-      (data?.paused.length ?? 0) +
-      (data?.completed.length ?? 0) +
-      (data?.archived.length ?? 0) >
-    0;
-
   return (
-    <section className="mx-auto grid max-w-6xl gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid content-start gap-6">
-        <PageTitle subtitle="Миссии и спринты." title="Челленджи" />
+    <PageContent className="lg:grid-cols-[minmax(0,1fr)_var(--right-rail-width)]">
+      <div className="order-1 grid min-w-0 content-start gap-5 lg:col-start-1 xl:gap-6">
+        <PageTitle
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link href="/progress">
+                <Button size="sm" variant="secondary">
+                  Смотреть прогресс
+                </Button>
+              </Link>
+              <Link href="#create-challenge">
+                <Button size="sm">Создать привычку</Button>
+              </Link>
+            </div>
+          }
+          subtitle="Привычки с этапами, прогрессом и опытом."
+          title="Привычки"
+        />
 
         {loadError ? (
           <Card className="border-danger/25 bg-danger-subtle">
@@ -76,45 +52,31 @@ export default async function ChallengesPage() {
           </Card>
         ) : null}
 
-        {!loadError && !hasAny ? (
-          <EmptyState description="Создайте миссию или выберите шаблон." title="Пока нет челленджей" />
+        {!supabase || !user ? (
+          <Card variant="muted">
+            <p className="text-sm text-muted-foreground">Войдите, чтобы управлять привычками.</p>
+          </Card>
         ) : null}
 
         {data ? (
           <>
-            <ChallengeSection challenges={data.active} title="Активные" />
-            <ChallengeSection
-              challenges={data.paused}
-              emptyDescription="Нет миссий на паузе."
-              title="На паузе"
+            <ChallengesSummary summary={data.summary} />
+            <ContinueMissionBlock mission={data.continueMission} />
+            <ChallengeTemplatesSection goals={data.goals} templates={data.templates} />
+            <ChallengesList
+              active={data.active}
+              archived={data.archived}
+              completed={data.completed}
+              goals={data.goals}
+              paused={data.paused}
             />
-            <ChallengeSection
-              challenges={data.completed}
-              title="Завершённые"
-            />
-            <ChallengeSection
-              challenges={data.archived}
-              title="Архив"
-            />
-            {supabase && user ? (
-              <ChallengeTemplateGrid goals={data.goals} templates={data.templates} />
-            ) : null}
           </>
         ) : null}
       </div>
 
-      <aside className="grid content-start gap-6">
-        <Card>
-          <h2 className="text-xl font-semibold">Новый челлендж</h2>
-          <div className="mt-4">
-            {supabase && user && data ? (
-              <CreateChallengeForm goals={data.goals} />
-            ) : (
-              <p className="text-sm text-muted-foreground">Войдите, чтобы создавать челленджи.</p>
-            )}
-          </div>
-        </Card>
+      <aside className="order-2 grid min-w-0 content-start lg:order-none lg:col-start-2 lg:row-start-1">
+        {supabase && user && data ? <ChallengeCreatePanel goals={data.goals} /> : null}
       </aside>
-    </section>
+    </PageContent>
   );
 }

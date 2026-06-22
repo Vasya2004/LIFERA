@@ -16,21 +16,22 @@ export function Textarea({
 }: TextareaProps) {
   const textareaId = id ?? props.name;
   const messageId = textareaId ? `${textareaId}-message` : undefined;
+  const invalidProps = error ? ({ "aria-invalid": "true" } as const) : {};
 
   return (
     <label className="grid gap-2 text-sm font-medium text-foreground">
       {label ? <span>{label}</span> : null}
       <textarea
         aria-describedby={error || helpText ? messageId : undefined}
-        aria-invalid={error ? true : undefined}
         className={[
-          "min-h-28 resize-y rounded-[var(--radius-control)] border border-border bg-surface px-4 py-3 text-foreground outline-none transition-[border-color,box-shadow,background-color] duration-200",
-          "placeholder:text-muted-foreground focus:border-ring focus:shadow-[var(--focus-ring)]",
+          "min-h-28 resize-y rounded-[var(--radius-control)] border border-border bg-[var(--input-surface)] px-4 py-3 text-foreground outline-none transition-[border-color,box-shadow,background-color] duration-200",
+          "placeholder:text-muted-foreground hover:bg-[var(--input-surface-hover)] focus:border-ring focus:shadow-[var(--focus-ring)]",
           "disabled:cursor-not-allowed disabled:opacity-60",
           error ? "border-danger focus:border-danger focus:shadow-none" : "",
           className,
         ].join(" ")}
         id={textareaId}
+        {...invalidProps}
         {...props}
       />
       {error || helpText ? (

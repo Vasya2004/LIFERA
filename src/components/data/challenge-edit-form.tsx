@@ -6,18 +6,30 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useToast } from "@/components/ui/toast-provider";
 import type { Challenge } from "@/lib/domain/types";
+import { handleMutationError, showMutationSuccess } from "@/lib/ui/feedback";
 
 type ChallengeEditFormProps = {
-  challenge: Pick<Challenge, "description" | "difficulty" | "duration_days" | "goal_id" | "id" | "title">;
+  challenge: Pick<
+    Challenge,
+    "description" | "difficulty" | "duration_days" | "goal_id" | "id" | "status" | "title"
+  >;
   goals: Array<{ id: string; title: string }>;
+  onCancel?: () => void;
+  onSaved?: () => void;
 };
 
-export function ChallengeEditForm({ challenge, goals }: ChallengeEditFormProps) {
+export function ChallengeEditForm({
+  challenge,
+  goals,
+  onCancel,
+  onSaved,
+}: ChallengeEditFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,7 +39,6 @@ export function ChallengeEditForm({ challenge, goals }: ChallengeEditFormProps) 
 
     setLoading(true);
     setError(null);
-    setMessage(null);
 
     const formData = new FormData(event.currentTarget);
     const goalId = String(formData.get("goal_id") ?? "");
@@ -38,6 +49,7 @@ export function ChallengeEditForm({ challenge, goals }: ChallengeEditFormProps) 
         difficulty: formData.get("difficulty"),
         duration_days: Number(formData.get("duration_days") ?? 7),
         goal_id: goalId || null,
+        status: formData.get("status"),
         title: String(formData.get("title") ?? "").trim(),
       }),
       headers: { "Content-Type": "application/json" },
@@ -48,12 +60,14 @@ export function ChallengeEditForm({ challenge, goals }: ChallengeEditFormProps) 
     setLoading(false);
 
     if (!response.ok) {
-      setError(payload?.error ?? "Не удалось сохранить челлендж.");
+      handleMutationError(toast, payload, "Не удалось сохранить привычку.");
+      setError(payload?.error ?? "Не удалось сохранить привычку.");
       return;
     }
 
-    setMessage("Миссия обновлена.");
+    showMutationSuccess(toast, "Изменения сохранены");
     router.refresh();
+    onSaved?.();
   }
 
   return (
@@ -84,11 +98,23 @@ export function ChallengeEditForm({ challenge, goals }: ChallengeEditFormProps) 
         <option value="medium">Средняя</option>
         <option value="hard">Сложная</option>
       </Select>
+      <Select defaultValue={challenge.status} label="Статус" name="status">
+        <option value="active">Активная</option>
+        <option value="paused">На паузе</option>
+        <option value="completed">Завершена</option>
+        <option value="archived">В архиве</option>
+      </Select>
       {error ? <p className="text-sm text-danger-foreground">{error}</p> : null}
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      <Button loading={loading} size="sm" type="submit" variant="secondary">
-        Сохранить миссию
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button loading={loading} loadingLabel="Сохраняем..." type="submit">
+          Сохранить
+        </Button>
+        {onCancel ? (
+          <Button onClick={onCancel} type="button" variant="secondary">
+            Отмена
+          </Button>
+        ) : null}
+      </div>
     </form>
   );
 }

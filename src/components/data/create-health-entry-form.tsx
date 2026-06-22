@@ -6,17 +6,26 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/toast-provider";
+import { handleMutationError, showMutationSuccess } from "@/lib/ui/feedback";
 
-export function CreateHealthEntryForm() {
+type CreateHealthEntryFormProps = {
+  onSuccess?: () => void;
+};
+
+export function CreateHealthEntryForm({ onSuccess }: CreateHealthEntryFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   async function submit(formData: FormData) {
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    setMessage(null);
 
     const response = await fetch("/api/health/metrics", {
       body: JSON.stringify({
@@ -30,54 +39,27 @@ export function CreateHealthEntryForm() {
       method: "POST",
     });
 
-    const payload = await response.json().catch(() => ({ error: "Create failed." }));
+    const payload = await response.json().catch(() => ({ error: "Не удалось сохранить запись." }));
     setLoading(false);
 
     if (!response.ok) {
+      handleMutationError(toast, payload, "Не удалось сохранить запись.");
       setError(payload.error ?? "Не удалось сохранить запись.");
       return;
     }
 
-    setMessage("Wellness-запись сохранена.");
+    showMutationSuccess(toast, "Запись состояния добавлена");
     router.refresh();
+    onSuccess?.();
   }
 
   return (
     <form action={submit} className="grid gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          defaultValue={5}
-          label="Энергия (1–10)"
-          max={10}
-          min={1}
-          name="energy_level"
-          type="number"
-        />
-        <Input
-          defaultValue={5}
-          label="Восстановление (1–10)"
-          max={10}
-          min={1}
-          name="recovery_score"
-          type="number"
-        />
-        <Input
-          defaultValue={7}
-          label="Сон, часы"
-          max={14}
-          min={0}
-          name="sleep_hours"
-          step="0.5"
-          type="number"
-        />
-        <Input
-          defaultValue={30}
-          label="Активность, минуты"
-          max={600}
-          min={0}
-          name="activity_minutes"
-          type="number"
-        />
+        <Input defaultValue={5} label="Энергия (1–10)" max={10} min={1} name="energy_level" type="number" />
+        <Input defaultValue={5} label="Восстановление (1–10)" max={10} min={1} name="recovery_score" type="number" />
+        <Input defaultValue={7} label="Сон, часы" max={14} min={0} name="sleep_hours" step="0.5" type="number" />
+        <Input defaultValue={30} label="Активность, минуты" max={600} min={0} name="activity_minutes" type="number" />
       </div>
       <Textarea label="Заметка" name="note" placeholder="Краткий контекст дня без медицинских деталей" />
       {error ? (
@@ -85,14 +67,9 @@ export function CreateHealthEntryForm() {
           {error}
         </p>
       ) : null}
-      <Button loading={loading} type="submit">
-        Сохранить wellness-запись
+      <Button loading={loading} loadingLabel="Сохраняем..." type="submit">
+        Сохранить запись
       </Button>
-      {message ? (
-        <p className="rounded-[var(--radius-control)] border border-[color:var(--border-primary-subtle)] bg-primary-subtle/40 px-4 py-3 text-sm text-foreground">
-          {message}
-        </p>
-      ) : null}
     </form>
   );
 }

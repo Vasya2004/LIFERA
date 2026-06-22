@@ -1,11 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export const XP_PER_LEVEL = 500;
+const POSTGRES_UNIQUE_VIOLATION = "23505";
+const XP_AWARD_RETRY_LIMIT = 3;
+
 export function calculateLevel(xpTotal: number) {
-  const level = Math.floor(xpTotal / 500) + 1;
-  const nextLevelXp = level * 500;
+  const level = Math.floor(xpTotal / XP_PER_LEVEL) + 1;
+  const nextLevelXp = level * XP_PER_LEVEL;
+  const levelProgress = Math.round(((xpTotal % XP_PER_LEVEL) / XP_PER_LEVEL) * 100);
 
   return {
     level,
+    levelProgress,
     nextLevelXp,
     xpToNextLevel: Math.max(0, nextLevelXp - xpTotal),
   };
@@ -35,14 +41,14 @@ export async function awardXpOnce({
   });
 
   if (insertError) {
-    if (insertError.code === "23505") {
+    if (insertError.code === POSTGRES_UNIQUE_VIOLATION) {
       return { awarded: false, level: null, xpTotal: null };
     }
 
     throw new Error(insertError.message);
   }
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < XP_AWARD_RETRY_LIMIT; attempt += 1) {
     const { data: profile, error: profileError } = await supabase
       .from("user_profiles")
       .select("xp_total")

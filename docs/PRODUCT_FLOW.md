@@ -2,23 +2,46 @@
 
 Lifera — персональная Life RPG-система для управления жизнью.
 
+## Терминология UI (Stage 1)
+
+| В коде / БД | В интерфейсе |
+| --- | --- |
+| goal | **Цель** |
+| challenge | Internal goal-plan/stage layer |
+| habit / `/habits` | **Миссия** |
+| xp | **Опыт** |
+| level | **Уровень** |
+| life_score | **Индекс жизни** |
+| achievement | **Достижение** |
+| progress | Контекстный прогресс внутри разделов; `/progress` hidden legacy |
+| wish / `/goals/wishes` | **Желание** / **Карта желаний** |
+| ai-assistant | **Ассистент Lifera** |
+| free / pro / ultra | **Free / Pro / Ultra** |
+
+Единые presentation labels: `src/lib/domain/labels.ts`.
+
 Формула продукта:
 
 ```text
-Цель → Челлендж / Привычка → Прогресс → XP → Уровень → Достижения → AI-рекомендация
+Цель → Миссия → Прогресс → Опыт → Уровень → Достижения → Рекомендация ассистента
 ```
 
-Привычки в Lifera — это регулярные ритуалы прокачки сфер жизни, связанные с целями, навыками, прогрессом и RPG-механикой, а не обычный habit tracker.
+Технический `/habits` в интерфейсе называется **Миссии**. Миссии — регулярные действия пользователя, связанные с прогрессом, XP и рекомендациями Lifera, а не обычный habit tracker.
+
+**Stage 1 — IA cleanup:** пользовательский продукт строится вокруг Главной, Целей,
+Миссий, Навыков, Здоровья, Финансов, Достижений, Ассистента, Плана, Профиля
+и Настроек. Карта желаний живёт внутри целей (`/goals/wishes`). `/progress`,
+`/challenges` и legacy `/wishes` не являются пунктами основного меню.
 
 ## Почему Lifera — не task-manager, habit-tracker и не календарь
 
 | Тип продукта | Фокус | Позиция Lifera |
 | --- | --- | --- |
-| Task manager | Список дел и дедлайны | Действия появляются **из цели и челленджа**, а не как бесконечный inbox |
-| Habit tracker | Streak и ежедневные галочки | Привычки — **ритуалы сфер жизни**, связанные с целями, навыками и XP |
-| Calendar-first | Расписание и слоты времени | Время задаёт **миссия (челлендж)** и стратегия (цель), не календарная сетка |
+| Task manager | Список дел и дедлайны | Действия появляются **из целей и миссий**, а не как бесконечный inbox |
+| Habit tracker | Streak и ежедневные галочки | Миссии — регулярные действия в системе развития, а не отдельный habit tracker |
+| Calendar-first | Расписание и слоты времени | Время и регулярность поддерживают цель, но не становятся календарной сеткой |
 
-Lifera строится вокруг **Life RPG-цикла**: стратегический результат → ограниченная миссия или регулярный ритуал → измеримый прогресс → геймификация → рекомендация следующего шага.
+Lifera строится вокруг **Life RPG-цикла**: стратегический результат → миссия → измеримый прогресс → геймификация → рекомендация следующего шага.
 
 Legacy-маршруты `/tasks`, `/calendar`, `/projects`, `/actions` намеренно ведут на `/dashboard`, чтобы не возвращать старую task/calendar-логику в ядро продукта.
 
@@ -27,27 +50,28 @@ Legacy-маршруты `/tasks`, `/calendar`, `/projects`, `/actions` наме�
 | Сущность | Роль |
 | --- | --- |
 | Цель | Стратегический результат |
-| Челлендж | Ограниченная по времени миссия / спринт |
-| Привычка | Регулярный ритуал прокачки сферы жизни |
+| Челлендж | Внутренний technical layer для существующих goal-plan stages |
+| Миссия | Регулярное действие пользователя; технически хранится в `habits` |
+| Желание | Визуальный мотиватор, который позже связывается с целью |
 | Прогресс | Аналитика движения (XP, уровни, Life Score) |
 | XP / уровни / достижения | Взрослая RPG-геймификация |
-| AI Ассистент | Стратегический помощник по данным пользователя |
+| AI Ассистент | **Ассистент Lifera** — рекомендательный слой по данным пользователя |
 | План | Публично: Free / Pro / Ultra; в приложении demo: Free / Premium до payment provider |
 
-### Цели, челленджи и привычки в одном цикле
+### Цели и миссии в одном цикле
 
 - **Цель** задаёт направление: «к чему движемся» в выбранной сфере жизни.
-- **Челлендж** переводит цель в ограниченный спринт с этапами и явным XP за завершение этапов.
-- **Привычка** поддерживает цель между спринтами: короткий повторяемый ритуал с привязкой к цели, навыку или активному челленджу.
+- **План цели** может использовать существующий challenge/stage backend, но не показывается как отдельный пользовательский раздел.
+- **Миссия** поддерживает движение регулярным действием и начисляет XP за выполнение.
 
-На Stage 1 маршрут `/habits` и навигация зафиксированы. **Stage 4** добавил полноценную бизнес-логику привычек (completion, XP, streak, achievements, dashboard/progress integration, Free limit 5 active).
+На Stage 1 маршрут `/habits` остаётся техническим, а пользовательский label фиксируется как **Миссии**.
 
 ## Публичный путь пользователя
 
 ```text
 Лендинг (/) → Регистрация (/register) или Вход (/login)
-  → Onboarding (/onboarding) — сферы жизни, первая цель, стартовый челлендж
-  → Dashboard (/dashboard)
+  → Onboarding (/onboarding) — 5-step setup: фокус → цель → миссия → ритуалы → проверка
+  → Dashboard (/dashboard) или /plan?selected=… при intended_plan pro/ultra
 ```
 
 Альтернативные входы:
@@ -63,18 +87,21 @@ Production на [https://lifera.app](https://lifera.app) проверен end-to
 
 ```text
 landing (/) → register → onboarding → dashboard
-  → goals / challenges / habits / progress / skills / health / finance / plan
+  → goals / goals/wishes / habits / skills / health / finance / achievements / plan
 ```
 
 - Auth redirects работают через `lifera.app` (`/dashboard` → `/login?next=…`).
 - Demo Pro/Ultra отключён на production (`DEMO_PREMIUM_ENABLED=false`, `activate-demo` → 403).
 - Smoke: `SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs` — passed.
+- Stage 10: `node scripts/production-qa.mjs`, `node scripts/diploma-qa.mjs` — production MVP + diploma readiness.
 
-Deploy reference: `docs/DEPLOYMENT.md`.
+Deploy reference: `docs/DEPLOYMENT.md`. Demo script: `docs/DEMO_SCRIPT.md`.
 
-**Stage 2:** лендинг (`/`) объясняет ценность и ведёт на `/register` или `/pricing`. Auth после входа проверяет `onboarding_completed` и направляет в `/onboarding` или `/dashboard`. Onboarding идемпотентен: повторный submit не создаёт дубли целей/челленджей.
+**Stage 2:** лендинг (`/`) объясняет ценность и ведёт на `/register` или `/pricing`. Auth после входа проверяет `onboarding_completed` и направляет в `/onboarding` или `/dashboard`. Onboarding идемпотентен: повторный submit не создаёт дубли целей/миссий.
 
-**Stage 3:** `/goals` и `/challenges` — полноценное ядро (квесты, миссии, шаги). Завершение шага через `POST /api/challenges/:id/stages/:stageId/complete` начисляет XP один раз (`xp_transactions` unique по `user_id + source_type + source_id`), обновляет level (`floor(xp_total/500)+1`), прогресс миссии и цели, проверяет achievements server-side.
+**Stage 5 — Onboarding upgrade:** `/onboarding` — premium 5-step wizard (фокус → цель → миссия → ритуалы → preview). Dedicated shell без public nav. `POST /api/onboarding/complete` принимает `starter_rituals[]` (до 3) и создаёт habits только если у пользователя ещё нет записей; XP за создание не начисляется. Recommended mission: «7 дней системного старта» (5 этапов). QA: `node scripts/onboarding-qa.mjs`.
+
+**Stage 3:** `/goals` и internal `/challenges` layer — существующее ядро плана цели и этапов. Завершение шага через `POST /api/challenges/:id/stages/:stageId/complete` начисляет XP один раз (`xp_transactions` unique по `user_id + source_type + source_id`), обновляет level (`floor(xp_total/500)+1`), прогресс плана и цели, проверяет achievements server-side.
 
 **Stage 3 — server requirements**
 
@@ -84,38 +111,47 @@ Deploy reference: `docs/DEPLOYMENT.md`.
 - Free limits: 3 active goals, 2 active challenges — ответ `403` с `code: PLAN_LIMIT` и `upgradeHref: /plan`.
 - Plan model: backend `free` / `pro` / `ultra` (migration `0005`; legacy `premium` → `pro`).
 
-**Stage 4 — Habits as RPG Rituals**
+**Stage 4 — Habits as Missions**
 
-- `/habits` — создание, редактирование, архивирование, completion ритуалов.
+- `/habits` — создание, редактирование, архивирование, completion миссий.
 - `POST /api/habits/:id/complete` — `habit_logs`, XP once per day, streak, achievements via `checkAchievements`.
 - Free limit: **5 active habits** — `PLAN_LIMIT` + `/plan` CTA.
-- Dashboard block «Ритуалы прокачки»; `/progress` — недельная аналитика ритуалов.
+- Dashboard missions block; `/progress` — hidden legacy analytics.
 - Migration `0003_habit_achievements.sql` required for habit achievement rows (backfill: `node scripts/apply-migration-0003.mjs`).
 - Rule-based AI recommendations include habits (no LLM).
 
-**Stage 5 — Progress / Analytics**
+**Stage 5 — Progress / Analytics (hidden legacy route after Stage 1)**
 
-- `/progress` — аналитический центр: Life Score, level, XP (total/weekly/by source), цели, челленджи, привычки, сферы жизни, недельная активность, достижения, rule-based AI insight.
+- `/progress` — hidden analytics route retained for regression: Life Score, level, XP, goals, missions, life areas, achievements, rule-based AI insight.
 - Domain: `src/lib/domain/progress.ts` → `getProgressData`, `buildProgressInsight`.
 - Без demoProfile для авторизованных пользователей; loading/error/empty states.
 
 **Stage 6 — Skills / Health / Finance Branches**
 
-- `/skills` — ветка компетенций: CRUD навыков, archive, связи с goals/challenges/habits, rule-based insight.
-- `/health` — wellness-ветка (не медицина): energy/sleep/activity/recovery, wellness score, disclaimer, health life_area activities.
-- `/finance` — финансовая ветка (не банк): savings/target/income/expenses snapshot, finance score, disclaimer, finance life_area activities.
+- `/skills` — ветка компетенций: hero «Профиль компетенций», product cards, modal edit, «Фокус развития», «Связанные действия», rule-based «Следующий шаг».
+- `/health` — ветка состояния (не медицина): hero «Индекс состояния», журнал, «Ритм недели», disclaimer, health life_area activities.
+- `/finance` — ветка устойчивости (не банк): hero «Индекс устойчивости», динамика, история снимков, ₽ formatting, disclaimer, finance life_area activities.
 - Domain: `skills.ts`, `health.ts`, `finance.ts`, `branches.ts`.
 - Migration `0004_branch_extensions.sql` — `skills.status`, notes on metrics tables.
 - Readiness: `node scripts/stage6-readiness.mjs`; QA: `node scripts/stage6-branches-qa.mjs`.
 
-**Stage 7 — Plan / Subscription Alignment**
+**Stage 6 — Pricing & Plan Value Pass (product)**
+
+- Value model: Free = «Стартовая система», Pro = «Полная Life OS», Ultra = «AI-стратег».
+- Shared catalog: `src/lib/domain/plan-catalog.ts` — roles, prices, matrix, coming soon.
+- Public `/pricing` + landing `PricingSection` — honest copy, no fake payment.
+- In-app `/plan` — `CurrentPlanHero`, `PlanValueCard`, `PlanFeatureMatrix`, `SelectedPlanNotice`, `PlanPaymentNotice`.
+- Оплата не подключена; `intended_plan` сохраняет намерение; demo только при `DEMO_PREMIUM_ENABLED=true`.
+- QA: `node scripts/plan-qa.mjs` (alias: `stage7-plan-qa.mjs`).
+
+**Stage 7 — Plan / Subscription Alignment (backend)**
 
 - Единая модель **Free / Pro / Ultra** в landing, `/pricing`, `/plan` и `subscriptions.plan`.
 - Migration `0005_subscription_plans.sql` — `premium` → `pro`, `user_profiles.intended_plan`.
 - `/register?plan=pro|ultra` сохраняет **намерение**, не оплаченный доступ; после onboarding редирект на `/plan?selected=…`.
 - Server-side gates: core limits, premium templates, AI weekly limit (Free), AI generation (Pro+), progress history 7 days (Free).
 - Demo Pro/Ultra: `POST /api/subscription/activate-demo` только при `DEMO_PREMIUM_ENABLED=true`.
-- Readiness: `node scripts/stage7-readiness.mjs`; QA: `node scripts/stage7-plan-qa.mjs`.
+- Readiness: `node scripts/stage7-readiness.mjs`; QA: `node scripts/plan-qa.mjs`.
 
 **Stage 3 — duplicate onboarding**
 
@@ -126,11 +162,11 @@ Deploy reference: `docs/DEPLOYMENT.md`.
 ```text
 1. Цель (/goals)
      ↓
-2. Челлендж (/challenges) или Привычка (/habits) — ритуал прокачки
+2. Миссия (/habits) или план цели (internal `/challenges` layer)
      ↓
-3. Завершение шага челленджа (server-side XP, один раз на шаг) **или** выполнение ритуала привычки (server-side XP, один раз в день)
+3. Завершение этапа плана (server-side XP, один раз на шаг) **или** выполнение миссии (server-side XP, один раз в день)
      ↓
-4. Прогресс (/progress) — XP, уровень, динамика
+4. Прогресс — XP, уровень, динамика внутри dashboard/целей/миссий
      ↓
 5. Достижения (/achievements) — milestones
      ↓
@@ -139,19 +175,19 @@ Deploy reference: `docs/DEPLOYMENT.md`.
 
 Сферы и модули расширяют контекст, но не заменяют ядро:
 
-- `/skills` — компетенции, связанные с целями и ритуалами.
-- `/health` — wellness-журнал и health-активности (не медицинский сервис).
-- `/finance` — финансовые цели и snapshots (не банковский трекер).
+- `/skills` — компетенции как branch dashboard: hero, cards, modal settings, связи с целями/миссиями/ритуалами.
+- `/health` — журнал состояния и ритм недели (не медицинский сервис).
+- `/finance` — финансовые снимки и прогресс к цели (не банковский трекер).
 
 ## Публичные тарифы (лендинг)
 
-| План | Назначение | Ключевые ограничения / ценность |
+| План | Роль | Ключевая ценность |
 | --- | --- | --- |
-| **Free** | Старт и знакомство с ядром Life RPG | 3 цели, 2 челленджа, 5 привычек; 3 AI-рекомендации/нед.; история 7 дней |
-| **Pro** | Полноценное регулярное использование | Без лимитов по ядру; расширенная аналитика; AI-декомпозиция и генерация; premium-шаблоны; полная история |
-| **Ultra** | Глубокий AI, стратегии и отчёты | Всё из Pro + продвинутый AI Ассистент, анализ просадок, персональные стратегии, AI-отчёты, Life Score |
+| **Free** | Стартовая система | До 3 целей, 2 миссий, 5 ритуалов; базовый прогресс; рекомендации Lifera; история 7 дней |
+| **Pro** | Полная Life OS | Без лимитов ядра; полная история; Pro-шаблоны; rule-based генерация миссий; расширенные рекомендации |
+| **Ultra** | AI-стратег | Всё из Pro + расширенный рекомендательный слой; стратегические отчёты и AI-режим — **Скоро** |
 
-Компонент: `src/components/landing/pricing-section.tsx`. CTA ведут на регистрацию с query `plan`. Query param = **intended plan**, не оплаченный доступ. Реальная оплата — future stage.
+Компоненты: `src/components/landing/pricing-section.tsx`, `src/components/billing/*`, данные — `plan-catalog.ts`. CTA → `/register` / `?plan=pro|ultra`. Query = **intended plan**, не оплаченный доступ. Реальная оплата — future stage.
 
 ## Free / Pro / Ultra flow (in-app)
 
@@ -187,20 +223,23 @@ Supabase Auth user
 
 1. Главная — `/dashboard`
 2. Цели — `/goals`
-3. Челленджи — `/challenges`
-4. Привычки — `/habits`
-5. Прогресс — `/progress`
-6. Достижения — `/achievements`
-7. Навыки — `/skills`
-8. Финансы — `/finance`
-9. Здоровье — `/health`
-10. AI Ассистент — `/ai-assistant`
+3. Миссии — `/habits`
+4. Навыки — `/skills`
+5. Здоровье — `/health`
+6. Финансы — `/finance`
+7. Достижения — `/achievements`
+8. Ассистент — `/ai-assistant`
 
 Нижний блок sidebar:
 
-11. Профиль — `/profile`
-12. Настройки — `/settings`
-13. План — `/plan` (canonical; `/billing` — технический alias)
+9. План — `/plan` (canonical; `/billing` — технический alias)
+10. Профиль — `/profile`
+11. Настройки — `/settings`
+
+`/goals/wishes` — вкладка внутри раздела «Цели». Legacy `/wishes` редиректит на `/goals/wishes`.
+`/progress` остаётся hidden legacy route. `/challenges` и `/challenges/[id]`
+остаются internal technical layer для существующих stage/XP flows, но не являются
+пунктами пользовательской навигации.
 
 ## Legacy redirects
 
@@ -213,3 +252,38 @@ Supabase Auth user
 | `/ai-coach` | `/ai-assistant` |
 
 `/habits` не редиректится — это часть финальной IA.
+
+## Stage 10 — Final MVP QA & Diploma Readiness
+
+Production MVP на [https://lifera.app](https://lifera.app) проверяется без изменения backend logic:
+
+| Check | Command |
+| --- | --- |
+| Unified smoke | `SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs` |
+| Production routes + auth | `node scripts/production-qa.mjs` |
+| Diploma orchestrator | `node scripts/diploma-qa.mjs` |
+| Full local Playwright | `DIPLOMA_QA_FULL=1 node scripts/diploma-qa.mjs` |
+
+Документация для защиты:
+
+- `docs/DEMO_SCRIPT.md` — сценарий демонстрации 8–12 мин
+- `docs/DIPLOMA_NOTES.md` — чеклист скриншотов, формулировки для ВКР
+- `output/diploma/` — папка для финальных скриншотов
+
+Ограничения production: `DEMO_PREMIUM_ENABLED=false`, demo activation → 403, без mock data для auth users.
+
+## Stage B — Goal Detail Workspace
+
+`/goals/[id]` становится главным рабочим пространством конкретной цели:
+
+```text
+Цель → План цели → Миссии → Прогресс → Желание/мотивация → Рекомендация ассистента
+```
+
+Правила Stage B:
+
+- `/challenges` не удаляется: миссии остаются техническим route и API, но в IA воспринимаются как **план цели**.
+- `/goals/[id]` показывает реальную цель текущего пользователя, связанные миссии, этапы, прогресс и rule-based рекомендацию.
+- Завершение этапов и миссий использует существующие server-side XP flows.
+- Карта желаний пока без migration: блок мотивации честно показывает место будущей связи желания с целью.
+- Для auth users не использовать mock/demo data.

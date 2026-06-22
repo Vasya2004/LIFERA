@@ -7,6 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 
+import { completeOnboardingWizardToDashboard } from "./lib/onboarding-wizard.mjs";
+
 const root = process.cwd();
 const envPath = path.join(root, ".env.local");
 
@@ -54,20 +56,9 @@ async function registerAndOnboard(page) {
   await page.getByRole("textbox", { name: "Повторите пароль" }).fill(testPassword);
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
   await page.waitForURL(/\/onboarding/, { timeout: 30000 });
-  await page.getByRole("textbox", { name: "Название цели" }).fill(`Stage 6 goal ${timestamp}`);
-  await page
-    .getByRole("checkbox", {
-      name: "Создать стартовую цель, челлендж с этапами и открыть Dashboard с моими данными.",
-    })
-    .check();
-  const onboardingComplete = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/onboarding/complete") && response.status() === 200,
-    { timeout: 90000 },
-  );
-  await page.getByRole("button", { name: "Запустить Life RPG-систему" }).click();
-  await onboardingComplete;
-  await page.waitForURL(/\/dashboard/, { timeout: 90000 });
+  await completeOnboardingWizardToDashboard(page, {
+    goalTitle: `Stage 6 goal ${timestamp}`,
+  });
 }
 
 async function main() {

@@ -23,44 +23,37 @@ const EMPTY_CTAS: Record<
 > = {
   finance: [
     { href: "/goals", label: "Финансовая цель" },
-    { href: "/habits", label: "Ритуал учёта" },
-    { href: "/challenges", label: "Финансовый челлендж" },
+    { href: "/habits", label: "Привычка учёта" },
   ],
   health: [
-    { href: "/goals", label: "Wellness-цель" },
-    { href: "/habits", label: "Wellness-ритуал" },
-    { href: "/challenges", label: "Health-челлендж" },
+    { href: "/goals", label: "Цель здоровья" },
+    { href: "/habits", label: "Привычка восстановления" },
   ],
   skills: [
     { href: "/goals", label: "Цель для навыка" },
-    { href: "/habits", label: "Ритуал прокачки" },
-    { href: "/challenges", label: "Челлендж развития" },
+    { href: "/habits", label: "Привычка прокачки" },
   ],
 };
 
 export function BranchActivitiesSection({
   branch,
-  challenges,
   goals,
   habits,
   title,
 }: BranchActivitiesSectionProps) {
-  const hasAny = goals.length > 0 || challenges.length > 0 || habits.length > 0;
+  const hasAny = goals.length > 0 || habits.length > 0;
   const emptyCtas = branch ? EMPTY_CTAS[branch] : [];
 
   return (
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{title}</h2>
-        <Link className="text-sm font-semibold text-primary hover:underline" href="/progress">
-          Прогресс
-        </Link>
       </div>
 
       {!hasAny ? (
         <div className="mt-4 grid gap-4">
           <p className="text-sm text-muted-foreground">
-            Пока нет связанных целей, челленджей или ритуалов в этой ветке.
+            Пока нет связанных целей или привычек в этой ветке.
           </p>
           {emptyCtas.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -90,33 +83,18 @@ export function BranchActivitiesSection({
               title={goal.title}
             />
           ))}
-          {challenges.slice(0, 4).map((challenge) => (
-            <ListItem
-              action={
-                <Link href={`/challenges/${challenge.id}`}>
-                  <Button size="sm" variant="secondary">
-                    Миссия
-                  </Button>
-                </Link>
-              }
-              key={challenge.id}
-              marker="primary"
-              meta={`${challenge.progress}% · челлендж`}
-              title={challenge.title}
-            />
-          ))}
           {habits.slice(0, 4).map((habit) => (
             <ListItem
               action={
                 <Link href="/habits">
                   <Button size="sm" variant="secondary">
-                    Ритуал
+                    Привычка
                   </Button>
                 </Link>
               }
               key={habit.id}
               marker="success"
-              meta={`${formatLifeArea(habit.life_area)} · streak ${habit.streak_current}`}
+              meta={`${formatLifeArea(habit.life_area)} · серия ${habit.streak_current} дн.`}
               title={habit.title}
             />
           ))}
@@ -126,8 +104,7 @@ export function BranchActivitiesSection({
       {hasAny ? (
         <div className="mt-5 flex flex-wrap gap-2">
           <Badge variant="muted">{goals.length} целей</Badge>
-          <Badge variant="muted">{challenges.length} челленджей</Badge>
-          <Badge variant="muted">{habits.length} ритуалов</Badge>
+          <Badge variant="muted">{habits.length} привычек</Badge>
         </div>
       ) : null}
     </Card>

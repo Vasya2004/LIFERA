@@ -4,8 +4,8 @@ import Link from "next/link";
 export function LandingHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
-      <div className="landing-container !px-0">
-        <div className="landing-glass flex h-14 items-center justify-between gap-3 rounded-full px-4 sm:px-5 lg:grid lg:h-14 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+      <div className="mx-auto w-full max-w-[1180px]">
+        <div className="landing-glass flex h-14 items-center justify-between gap-3 rounded-full border-white/10 bg-black/35 px-3 shadow-[0_18px_55px_rgb(0_0_0/0.24)] backdrop-blur-xl sm:px-4 lg:grid lg:h-14 lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:px-3">
           <Link className="flex items-center gap-2.5 justify-self-start" href="/">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-[var(--landing-surface-elevated)]">
               <Image
@@ -51,7 +51,7 @@ export function LandingHeader() {
               Войти
             </Link>
             <Link
-              className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full bg-[var(--landing-accent)] px-3 text-[11px] font-semibold text-white transition-colors hover:bg-[var(--landing-accent-2)] sm:h-10 sm:px-4 sm:text-sm"
+              className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full bg-[var(--landing-accent)] px-3 text-[11px] font-semibold text-white shadow-[0_10px_28px_rgb(255_90_31/0.22)] transition-colors hover:bg-[#E94F18] sm:h-10 sm:px-4 sm:text-sm"
               href="/register"
             >
               Начать бесплатно

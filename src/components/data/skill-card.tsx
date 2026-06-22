@@ -12,10 +12,7 @@ type SkillCardProps = {
 
 export function SkillCard({ skill }: SkillCardProps) {
   const categoryLabel = SKILL_CATEGORIES[skill.category] ?? skill.category;
-  const hasLinks =
-    skill.linkedGoals.length > 0 ||
-    skill.linkedChallenges.length > 0 ||
-    skill.linkedHabits.length > 0;
+  const hasLinks = skill.linkedGoals.length > 0 || skill.linkedHabits.length > 0;
 
   return (
     <Card>
@@ -37,20 +34,20 @@ export function SkillCard({ skill }: SkillCardProps) {
 
       <div className="mt-5 grid gap-4 sm:grid-cols-3">
         <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">Progress</p>
+          <p className="text-sm text-muted-foreground">Прогресс</p>
           <p className="mt-1 font-semibold">{skill.computedProgress}%</p>
           <Progress className="mt-2" tone="primary" value={skill.computedProgress} />
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">XP</p>
+          <p className="text-sm text-muted-foreground">Опыт</p>
           <p className="mt-1 font-semibold">{skill.computedXp}</p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Связи</p>
           <p className="mt-1 text-sm text-foreground">
-            {skill.linkedGoals.length} · {skill.linkedChallenges.length} · {skill.linkedHabits.length}
+            {skill.linkedGoals.length} · {skill.linkedHabits.length}
           </p>
-          <p className="text-xs text-muted-foreground">цели · челленджи · ритуалы</p>
+          <p className="text-xs text-muted-foreground">цели · привычки</p>
         </div>
       </div>
 
@@ -64,22 +61,9 @@ export function SkillCard({ skill }: SkillCardProps) {
               </Link>
             </div>
           ))}
-          {skill.linkedChallenges.slice(0, 2).map((challenge) => (
-            <div className="flex flex-wrap items-center justify-between gap-2" key={challenge.id}>
-              <span className="min-w-0 truncate text-muted-foreground">
-                Челлендж: {challenge.title}
-              </span>
-              <Link
-                className="shrink-0 text-primary hover:underline"
-                href={`/challenges/${challenge.id}`}
-              >
-                Открыть
-              </Link>
-            </div>
-          ))}
           {skill.linkedHabits.slice(0, 2).map((habit) => (
             <div className="flex flex-wrap items-center justify-between gap-2" key={habit.id}>
-              <span className="min-w-0 truncate text-muted-foreground">Ритуал: {habit.title}</span>
+              <span className="min-w-0 truncate text-muted-foreground">Привычка: {habit.title}</span>
               <Link className="shrink-0 text-primary hover:underline" href="/habits">
                 Открыть
               </Link>
@@ -88,7 +72,7 @@ export function SkillCard({ skill }: SkillCardProps) {
         </div>
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">
-          Навык пока не связан с квестами и ритуалами.
+          Навык пока не связан с целями или привычками.
         </p>
       )}
 
@@ -100,12 +84,7 @@ export function SkillCard({ skill }: SkillCardProps) {
         </Link>
         <Link href="/habits">
           <Button size="sm" variant="secondary">
-            Ритуал
-          </Button>
-        </Link>
-        <Link href="/challenges">
-          <Button size="sm" variant="secondary">
-            Челлендж
+            Привычка
           </Button>
         </Link>
       </div>

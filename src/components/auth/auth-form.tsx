@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { mapAuthErrorMessage } from "@/lib/auth/messages";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -10,24 +10,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 type AuthFormProps = {
   mode: "login" | "register";
 };
-
-async function resolvePostAuthPath(supabase: ReturnType<typeof createSupabaseBrowserClient>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return "/login";
-  }
-
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("onboarding_completed")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  return profile?.onboarding_completed ? "/dashboard" : "/onboarding";
-}
 
 function AuthField({
   autoComplete,
@@ -63,13 +45,14 @@ function AuthField({
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const plan = searchParams.get("plan");
+  const registered = searchParams.get("registered") === "1";
+  const authError = searchParams.get("error");
   const queryString = searchParams.toString();
   const alternateHref =
     mode === "login"
@@ -88,6 +71,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError(null);
     setInfo(null);
     setLoading(true);
+    let navigating = false;
 
     try {
       const supabase = createSupabaseBrowserClient();
@@ -119,9 +103,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
 
         if (!data.session) {
-          setInfo(
-            "Аккаунт создан. Если включено подтверждение email — проверьте почту, затем войдите и завершите настройку профиля.",
-          );
+          navigating = true;
+          window.location.assign("/login?registered=1");
           return;
         }
 
@@ -132,8 +115,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             .eq("user_id", data.user.id);
         }
 
-        router.push("/onboarding");
-        router.refresh();
+        navigating = true;
+        window.location.assign("/onboarding");
         return;
       }
 
@@ -147,13 +130,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
-      const defaultPath = await resolvePostAuthPath(supabase);
       const nextPath = searchParams.get("next");
       const destination =
-        defaultPath === "/onboarding" ? "/onboarding" : (nextPath ?? defaultPath);
+        nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard";
 
-      router.push(destination);
-      router.refresh();
+      navigating = true;
+      window.location.assign(destination);
     } catch (authError) {
       setError(
         authError instanceof Error
@@ -161,13 +143,29 @@ export function AuthForm({ mode }: AuthFormProps) {
           : "Не удалось выполнить вход или регистрацию.",
       );
     } finally {
-      setLoading(false);
+      if (!navigating) {
+        setLoading(false);
+      }
     }
   }
 
   return (
     <>
-      <form action={handleSubmit} aria-busy={loading} className="auth-form">
+      <form action={handleSubmit} aria-busy={loading ? "true" : "false"} className="auth-form">
+        {mode === "login" && registered ? (
+          <p className="auth-alert-info" role="status">
+            Аккаунт создан. Проверьте почту и подтвердите email, затем войдите — и вы попадёте в
+            онбординг.
+          </p>
+        ) : null}
+
+        {mode === "login" && authError === "auth" ? (
+          <p className="auth-alert-error" role="alert">
+            Ссылка подтверждения недействительна или истекла. Попробуйте войти или зарегистрироваться
+            снова.
+          </p>
+        ) : null}
+
         {mode === "register" && (plan === "pro" || plan === "ultra") ? (
           <p className="auth-plan-badge">
             Выбран план: {plan === "pro" ? "Pro" : "Ultra"} — это намерение, не оплаченный доступ.
@@ -204,6 +202,14 @@ export function AuthForm({ mode }: AuthFormProps) {
           type="password"
         />
 
+        {mode === "login" ? (
+          <div className="text-right">
+            <Link className="text-sm text-primary hover:underline" href="/forgot-password">
+              Забыли пароль?
+            </Link>
+          </div>
+        ) : null}
+
         {mode === "register" ? (
           <AuthField
             autoComplete="new-password"
@@ -228,7 +234,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         ) : null}
 
         <button
-          aria-busy={loading}
+          aria-busy={loading ? "true" : "false"}
           aria-live="polite"
           className="auth-submit"
           disabled={loading}

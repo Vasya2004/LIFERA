@@ -5,8 +5,8 @@ type PageHeaderProps = {
 
 export function PageHeader({ description, title }: PageHeaderProps) {
   return (
-    <header className="border-b border-border bg-surface/80 px-5 py-5 backdrop-blur sm:px-8">
-      <div className="mx-auto max-w-6xl">
+    <header className="border-b border-border bg-surface/80 px-[var(--app-content-gutter)] py-5 backdrop-blur">
+      <div className="w-full">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {title}
         </h1>

@@ -56,3 +56,5 @@ Clients: web (current), mobile, desktop, Telegram bots, external AI agents.
 
 All external entry points call `src/lib/domain/*` — no duplicate gamification or subscription rules.
 
+**Plans (Stage 6 value pass):** presentation copy and feature matrix live in `src/lib/domain/plan-catalog.ts`. Server gates remain in `subscription.ts` (`FREE_LIMITS`, AI weekly limit, progress history). Payment provider not connected; `intended_plan` stores registration intent only.
+

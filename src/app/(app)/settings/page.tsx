@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { PageContent } from "@/components/layout/page-content";
 import { PageTitle } from "@/components/layout/page-title";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -8,27 +9,31 @@ import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { PLAN_LABELS } from "@/lib/domain/plan-catalog";
 import { getUserPlan } from "@/lib/domain/subscription";
+import type { PlanTier } from "@/lib/domain/types";
 
 export default async function SettingsPage() {
   const { supabase, user } = await getCurrentUser();
-  const profile =
-    supabase && user
-      ? (
-          await supabase
-            .from("user_profiles")
-            .select("full_name, preferred_theme, plan")
-            .eq("user_id", user.id)
-            .maybeSingle()
-        ).data
-      : null;
+  let profile = null;
+  let currentPlan: PlanTier = "free";
 
-  const currentPlan =
-    supabase && user ? await getUserPlan(supabase, user.id) : ("free" as const);
+  if (supabase && user) {
+    const [profileResult, plan] = await Promise.all([
+      supabase
+        .from("user_profiles")
+        .select("full_name, preferred_theme, plan")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      getUserPlan(supabase, user.id),
+    ]);
+
+    profile = profileResult.data;
+    currentPlan = plan;
+  }
 
   return (
-    <section className="mx-auto grid max-w-3xl gap-6 px-5 py-8 sm:px-8">
+    <PageContent>
       <PageTitle
-        subtitle="Аккаунт, тема и базовые параметры MVP."
+        subtitle="Аккаунт, тема и базовые параметры приложения."
         title="Настройки"
       />
 
@@ -37,7 +42,7 @@ export default async function SettingsPage() {
         <dl className="mt-4 grid gap-3 text-sm">
           <div className="flex items-center justify-between gap-4">
             <dt className="text-muted-foreground">Email</dt>
-            <dd className="font-medium">{user?.email ?? "—"}</dd>
+            <dd className="font-medium break-all">{user?.email ?? "—"}</dd>
           </div>
           <div className="flex items-center justify-between gap-4">
             <dt className="text-muted-foreground">Имя</dt>
@@ -96,6 +101,6 @@ export default async function SettingsPage() {
           <SignOutButton />
         </div>
       </Card>
-    </section>
+    </PageContent>
   );
 }

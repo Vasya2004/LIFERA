@@ -1,5 +1,3 @@
-import { ArrowRight } from "lucide-react";
-
 import { PrimaryButton, SecondaryButton } from "@/components/landing/landing-buttons";
 
 export function LandingFinalCta() {
@@ -15,11 +13,11 @@ export function LandingFinalCta() {
             Собери свою систему прогресса
           </h2>
           <p className="relative mx-auto mt-5 max-w-xl leading-[1.5] text-[var(--landing-text-secondary)]">
-            Начни с одной цели, запусти первый челлендж и преврати развитие в понятный маршрут.
+            Начни с одной цели, запусти первую привычку и преврати развитие в понятный маршрут.
           </p>
           <div className="relative mt-10 flex flex-wrap justify-center gap-3">
             <PrimaryButton href="/register">
-              Начать бесплатно <ArrowRight size={16} />
+              Начать бесплатно
             </PrimaryButton>
             <SecondaryButton href="/login">Войти</SecondaryButton>
           </div>

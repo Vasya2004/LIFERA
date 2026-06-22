@@ -1,14 +1,34 @@
 # Lifera
 
-Lifera is a Next.js product prototype for a personal Life RPG system: goals, time-boxed challenges, life-area rituals (habits), progress, XP, levels, achievements and rule-based AI recommendations.
+Lifera is a Next.js product for a personal Life RPG system: goals, missions, life-area context, experience (XP in data layer), levels, achievements and rule-based recommendations from **Ассистент Lifera**.
 
 Core product loop:
 
 ```text
-goal -> challenge or habit -> progress -> XP -> level -> achievements -> AI recommendation
+goal → mission → progress → experience → level → achievements → assistant recommendation
 ```
 
-Lifera is not a task manager or calendar-first app. Habits in Lifera are regular rituals for leveling up life areas, not a generic habit tracker.
+**UI terminology (RU):** цели · миссии · навыки · здоровье · финансы · опыт · уровень · индекс жизни · достижения · Ассистент Lifera. See `src/lib/domain/labels.ts` and `docs/PRODUCT_FLOW.md`.
+
+Lifera is not a task manager, generic habit tracker or calendar-first app. The technical `/habits` route is user-facing **Миссии**: regular actions that move the user's life system forward.
+
+## Current Product IA
+
+Stage 1 locks the user-facing product around these primary sections:
+
+- Главная
+- Цели
+- Миссии
+- Навыки
+- Здоровье
+- Финансы
+- Достижения
+- Ассистент
+- План
+- Профиль
+- Настройки
+
+Goals have section tabs: `/goals` for goals and `/goals/wishes` for the wish map. Legacy `/wishes` redirects to `/goals/wishes`. `/progress` remains a hidden legacy route. `/challenges` and `/challenges/[id]` remain hidden/internal technical routes for existing stage-completion flows, but they are not primary user navigation. `/habits` remains the technical route for user-facing **Миссии**.
 
 ## Production
 
@@ -30,7 +50,11 @@ Production smoke (passed):
 
 ```bash
 SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs
+node scripts/production-qa.mjs
+node scripts/diploma-qa.mjs
 ```
+
+Diploma demo script: `docs/DEMO_SCRIPT.md`. Screenshots folder: `output/diploma/`.
 
 Deploy details: `docs/DEPLOYMENT.md`.
 
@@ -105,9 +129,10 @@ supabase/migrations/0003_habit_achievements.sql
 supabase/migrations/0004_branch_extensions.sql
 supabase/migrations/0005_subscription_plans.sql
 supabase/migrations/0006_achievement_uniqueness.sql
+supabase/migrations/0007_goals_wishes_structure.sql
 ```
 
-Migration `0001` creates core Life RPG tables. Migration `0002` adds `habits` and `habit_logs`. Migration `0003` adds habit achievements and updates the signup trigger. Migration `0004` adds `skills.status`, `skills.updated_at`, and optional `note` on health/finance metrics (Stage 6 branches). Migration `0005` aligns subscriptions with Free / Pro / Ultra, migrates legacy `premium` → `pro`, and adds `user_profiles.intended_plan` (Stage 7). Migration `0006` deduplicates achievements and adds a unique index on `(user_id, condition_type, condition_value)` (pre-deploy).
+Migration `0001` creates core Life RPG tables. Migration `0002` adds `habits` and `habit_logs`. Migration `0003` adds habit achievements and updates the signup trigger. Migration `0004` adds `skills.status`, `skills.updated_at`, and optional `note` on health/finance metrics (Stage 6 branches). Migration `0005` aligns subscriptions with Free / Pro / Ultra, migrates legacy `premium` → `pro`, and adds `user_profiles.intended_plan` (Stage 7). Migration `0006` deduplicates achievements and adds a unique index on `(user_id, condition_type, condition_value)` (pre-deploy). Migration `0007` adds `user_profiles.primary_goal_id` and the `wishes` table for the Goals + Wishes structure.
 
 If you cannot run SQL directly, apply achievement backfill with:
 
@@ -152,6 +177,7 @@ Verify: `node scripts/stage6-readiness.mjs`
 - `finance_metrics`
 - `ai_recommendations`
 - `subscriptions`
+- `wishes`
 
 It also enables RLS and creates an auth trigger that provisions profile, subscription and starter achievements after registration.
 
@@ -171,17 +197,24 @@ Protected:
 - `/onboarding`
 - `/dashboard`
 - `/goals`
-- `/challenges`
-- `/challenges/[id]`
+- `/goals/[id]`
+- `/goals/wishes`
 - `/habits`
-- `/progress`
 - `/skills`
 - `/health`
 - `/finance`
 - `/achievements`
 - `/ai-assistant`
+- `/plan`
 - `/profile`
 - `/settings`
+
+Hidden legacy / internal routes:
+
+- `/challenges`
+- `/challenges/[id]`
+- `/progress`
+- `/wishes` (redirects to `/goals/wishes`)
 - `/plan` (canonical Free/Premium UI)
 - `/billing` (technical alias of `/plan`)
 
@@ -194,34 +227,45 @@ Legacy routes (`/tasks`, `/calendar`, `/projects`, `/actions`) redirect to `/das
 1. Open `/` (landing) and start at `/register`.
 2. Register at `/register` (or sign in at `/login`).
 3. If email confirmation is enabled, confirm email and log in.
-4. Complete `/onboarding` (goal, challenge, stages — idempotent).
-5. Open `/dashboard` with starter goal and challenge.
+4. Complete `/onboarding` — 5-step setup (focus → goal → mission → missions → preview; idempotent; creates starter mission records when none exist).
+5. Open `/dashboard` with starter goal and missions.
+6. Open `/goals/[id]` from the goals list to work inside the goal workspace: plan, missions, progress, motivation and assistant recommendation.
 
 **Stage 3 — Life RPG loop (requires `SUPABASE_SERVICE_ROLE_KEY`)**
 
-6. Open `/challenges/[id]` and complete the active step (server-side XP, one time per step).
-7. Confirm in Supabase / UI: `challenge_stages.status`, `xp_transactions`, `user_profiles.xp_total`, `level`, challenge/goal `progress`, unlocked `achievements`.
-8. Refresh `/dashboard` — XP, level, next step and recent achievements update from real data (no demo fallback on dashboard).
-9. Free limits: 3 active goals, 2 active challenges, 5 active habits — server returns `PLAN_LIMIT` with link to `/plan`.
-10. Activate demo Premium in `/plan` when testing unlimited creation (`DEMO_PREMIUM_ENABLED=true` in `.env.local`).
+7. Complete a goal-plan stage from the goal workspace (server-side XP, one time per step). Legacy `/challenges/[id]` remains available for regression.
+8. Confirm in Supabase / UI: `challenge_stages.status`, `xp_transactions`, `user_profiles.xp_total`, `level`, challenge/goal `progress`, unlocked `achievements`.
+9. Refresh `/dashboard` — XP, level, next step and recent achievements update from real data (no demo fallback on dashboard).
+10. Free limits: 3 active goals, 2 active challenges, 5 active habits — server returns `PLAN_LIMIT` with link to `/plan`.
+11. Activate demo Premium in `/plan` when testing unlimited creation (`DEMO_PREMIUM_ENABLED=true` in `.env.local`).
 
-**Stage 4 — Habits as RPG Rituals**
+**Stage 4 — Habits as Missions**
 
-11. Open `/habits`, create a ritual, complete it once per day for XP.
-12. Confirm: `habit_logs`, `streak_current`, `streak_best`, `last_completed_at`, dashboard block «Ритуалы прокачки», progress analytics.
-13. Apply migration `0003` (or `node scripts/apply-migration-0003.mjs`) for habit achievements.
-14. Readiness: `node scripts/stage4-readiness.mjs`. QA: `node scripts/stage45-habits-qa.mjs`.
+1. Open `/habits`, create a mission, complete it once per day for XP.
+2. Confirm: `habit_logs`, `streak_current`, `streak_best`, `last_completed_at`, dashboard missions block, hidden progress analytics.
+3. Apply migration `0003` (or `node scripts/apply-migration-0003.mjs`) for habit achievements.
+4. Readiness: `node scripts/stage4-readiness.mjs`. QA: `node scripts/stage45-habits-qa.mjs`.
 
-**Stage 5 — Progress / Analytics**
+**Onboarding upgrade (product Stage 5)**
 
-15. Open `/progress` for Life Score, XP analytics, life areas, weekly activity, goals/challenges/habits summaries, achievements, AI progress insight.
+- `/onboarding` — 5-step premium setup wizard; dedicated shell; starter rituals via `starter_rituals[]`.
+- QA: `node scripts/onboarding-qa.mjs`.
+
+**Stage 5 — Progress / Analytics (hidden legacy route after Stage 1)**
+
+15. `/progress` remains available for regression and internal analytics validation, but it is hidden from primary navigation.
 16. Data layer: `src/lib/domain/progress.ts` (`getProgressData`).
 
-**Stage 6 — Skills / Health / Finance Branches**
+**Pricing & Plan Value Pass (product Stage 6)**
 
-17. Open `/skills` — create/edit/archive skills; link via goals (`skill_id`) and habits (`linked_skill_id`).
-18. Open `/health` — wellness snapshot (energy, sleep, activity, recovery) with optional note; disclaimer visible; health life_area activities.
-19. Open `/finance` — savings snapshot and stability score with optional note; disclaimer visible; finance life_area activities.
+- `/pricing` + `/plan` — value-based tiers from `plan-catalog.ts`; feature matrix; payment honesty.
+- QA: `node scripts/plan-qa.mjs`.
+
+**Stage 6 — Advanced Life-Area Branches**
+
+17. Open `/skills` — advanced competence context; link via goals (`skill_id`) and habits (`linked_skill_id`).
+18. Open `/health` — advanced wellness context with optional note; disclaimer visible; health life_area activities.
+19. Open `/finance` — advanced financial context with optional note; disclaimer visible; finance life_area activities.
 20. Apply migration `0004` (`node scripts/apply-migration-0004.mjs` or Supabase SQL Editor) for `skills.status` and metric notes.
 21. Readiness: `node scripts/stage6-readiness.mjs`. QA: `node scripts/stage6-branches-qa.mjs` (create/edit/archive skills, metrics with notes, mobile, regression).
 
@@ -230,7 +274,7 @@ Legacy routes (`/tasks`, `/calendar`, `/projects`, `/actions`) redirect to `/das
 22. Open `/plan` — current plan, limits, Free / Pro / Ultra comparison, demo activation (if `DEMO_PREMIUM_ENABLED=true`).
 23. Register with `?plan=pro` or `?plan=ultra` — saves `intended_plan` only; paid access stays Free until demo or future payment.
 24. Apply migration `0005` (`node scripts/apply-migration-0005.mjs` or Supabase SQL Editor).
-25. Readiness: `node scripts/stage7-readiness.mjs`. QA: `node scripts/stage7-plan-qa.mjs`.
+25. Readiness: `node scripts/stage7-readiness.mjs`. QA: `node scripts/plan-qa.mjs`.
 
 Unified plan model: backend `free` / `pro` / `ultra`. Legacy `premium` migrates to `pro`. Payment provider is a future stage.
 
@@ -360,6 +404,8 @@ SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs
 Optional E2E (Playwright, slower):
 
 ```bash
+node scripts/onboarding-qa.mjs
+node scripts/plan-qa.mjs
 node scripts/stage45-habits-qa.mjs
 node scripts/stage6-branches-qa.mjs
 node scripts/stage7-plan-qa.mjs

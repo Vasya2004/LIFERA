@@ -60,6 +60,51 @@ Lifera может использоваться как реальный инст�
 - AI Coach с рекомендацией.
 - Профиль пользователя.
 
+## Скриншоты MVP (Stage 10 — lifera.app)
+
+Чеклист для приложения к ВКР. Сохранять в `output/diploma/` (desktop 1280px + mobile 390px где уместно).
+
+| # | Экран | Маршрут | Что показать |
+| --- | --- | --- | --- |
+| 1 | Лендинг | `/` | Hero, CTA, pricing preview |
+| 2 | Регистрация | `/register` | Auth shell, форма |
+| 3 | Onboarding | `/onboarding` | Stepper, выбор фокуса |
+| 4 | Dashboard | `/dashboard` | Фокус дня, индекс жизни |
+| 5 | Ритуал + toast | `/habits` | Complete + feedback |
+| 6 | Миссия | `/challenges/[id]` | Этапы, завершение этапа |
+| 7 | Прогресс | `/progress` | Пульс недели, сферы |
+| 8 | Достижения | `/achievements` | Unlocked milestone |
+| 9 | Ассистент | `/ai-assistant` | Recommendation card |
+| 10 | План (mobile) | `/plan` | Free/Pro/Ultra, matrix cards |
+
+Demo walkthrough: `docs/DEMO_SCRIPT.md`.
+
+## MVP readiness (Stage 10)
+
+Production: [https://lifera.app](https://lifera.app)
+
+Core loop (verified locally via Playwright QA + production smoke):
+
+```text
+цель → миссия → ритуал → опыт → уровень → достижение → прогресс → рекомендация
+```
+
+Production checks:
+
+```bash
+SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs
+node scripts/production-qa.mjs
+node scripts/diploma-qa.mjs
+```
+
+Full local regression (requires `npm run dev` + `.env.local`):
+
+```bash
+DIPLOMA_QA_FULL=1 node scripts/diploma-qa.mjs
+```
+
+Deploy reference: `docs/DEPLOYMENT.md`.
+
 ## Как описать архитектуру
 
 Архитектуру можно описать как full-stack web-приложение на Next.js:

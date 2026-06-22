@@ -37,6 +37,7 @@ yarn-error.log*
 # QA / debug artifacts
 /output/
 /.playwright-cli/
+/.mimocode/
 
 # vercel
 .vercel

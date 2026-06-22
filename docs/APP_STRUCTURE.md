@@ -1,14 +1,14 @@
 # Lifera App Structure
 
-Stage 1 зафиксировал финальную информационную архитектуру и product flow. См. также `PRODUCT_FLOW.md` и `TECH_ARCHITECTURE.md`.
+Stage 1 зафиксировал текущую информационную архитектуру и product flow. См. также `PRODUCT_FLOW.md` и `TECH_ARCHITECTURE.md`.
 
 Формула продукта:
 
 ```text
-Цель → Челлендж / Привычка → Прогресс → XP → Уровень → Достижения → AI-рекомендация
+Цель → Миссия → Прогресс → XP → Уровень → Достижения → AI-рекомендация
 ```
 
-Привычки в Lifera — регулярные ритуалы прокачки сфер жизни, а не обычный habit tracker.
+Технический маршрут `/habits` в интерфейсе называется **Миссии**. Это регулярные действия пользователя, а не отдельный generic habit tracker.
 
 ## Public Routes
 
@@ -18,7 +18,7 @@ Stage 1 зафиксировал финальную информационную
 | `/pricing` | Free / Pro / Ultra plans (public pricing UI) |
 | `/login` | Sign in |
 | `/register` | Sign up |
-| `/onboarding` | Initial life areas, first goal and starter challenge |
+| `/onboarding` | Initial life areas, first goal and starter mission |
 | `/privacy` | Privacy policy |
 | `/terms` | Terms |
 
@@ -34,14 +34,14 @@ Stage 1 зафиксировал финальную информационную
 | --- | --- | --- |
 | `/dashboard` | Главная | Ecosystem overview, Life Score, XP, next step |
 | `/goals` | Цели | Goal CRUD and life area linkage |
-| `/challenges` | Челленджи | Challenge CRUD and staged progress |
-| `/habits` | Привычки | Rituals linked to goals/skills/challenges (full module later) |
-| `/progress` | Прогресс | XP, level and progress overview |
+| `/goals/[id]` | Цель | Main goal workspace: plan, missions, progress, motivation, recommendation |
+| `/goals/wishes` | Карта желаний | Section tab inside goals |
+| `/habits` | Миссии | Regular actions powered by the existing habits data layer |
+| `/skills` | Навыки | Hard/soft skill context |
+| `/health` | Здоровье | Wellness, energy and recovery life-area dashboard |
+| `/finance` | Финансы | Financial stability and movement toward goals |
 | `/achievements` | Достижения | Locked/unlocked achievements |
-| `/skills` | Навыки | Skills preview / summary |
-| `/finance` | Финансы | Finance summary (manual/demo) |
-| `/health` | Здоровье | Wellness summary |
-| `/ai-assistant` | AI Ассистент | Rule-based recommendations |
+| `/ai-assistant` | Ассистент | Rule-based recommendations |
 | `/profile` | Профиль | Account, level, XP, life areas |
 | `/settings` | Настройки | Account, appearance, privacy, data, plan |
 | `/plan` | План | Free/Premium state and demo activation (canonical) |
@@ -49,17 +49,19 @@ Stage 1 зафиксировал финальную информационную
 
 ## Sidebar layout
 
-**Основное:** Главная.
+**Основное:** Главная, Цели, Миссии, Навыки, Здоровье, Финансы, Достижения, Ассистент.
 
-**Ядро продукта:** Цели, Челленджи, Привычки, Прогресс, Достижения.
+**Нижний блок:** План, Профиль, Настройки.
 
-**Сферы:** Навыки, Финансы, Здоровье.
+Конфигурация: `src/config/navigation.ts`. Рендер: `Sidebar`, `MobileNav` (подмножество: Главная, Цели, Миссии, Навыки, Ещё; в `Ещё` показаны Здоровье, Финансы, Достижения, Ассистент, План, Профиль, Настройки).
 
-**Интеллект:** AI Ассистент.
+## Hidden legacy / internal routes
 
-**Нижний блок:** Профиль, Настройки, План.
-
-Конфигурация: `src/config/navigation.ts`. Рендер: `Sidebar`, `MobileNav` (подмножество: Главная, Цели, Челленджи, Привычки, AI Ассистент).
+| Route | Role |
+| --- | --- |
+| `/challenges` and `/challenges/[id]` | Internal goal-plan/stage layer retained for existing flows |
+| `/progress` | Hidden legacy analytics route retained for regression |
+| `/wishes` | Redirects to `/goals/wishes` |
 
 ## Legacy routes
 

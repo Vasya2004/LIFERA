@@ -24,7 +24,7 @@ export function ModulePreview({
   title,
 }: ModulePreviewProps) {
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[1.2fr_0.8fr]">
+    <section className="app-page grid gap-5 pt-6 pb-8 lg:grid-cols-[1.2fr_0.8fr] xl:gap-6 xl:pb-10">
       <Card variant="elevated">
         <CardHeader>
           <Badge variant="muted">Запланировано</Badge>

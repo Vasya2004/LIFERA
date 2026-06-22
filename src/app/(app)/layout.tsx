@@ -7,6 +7,8 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: AppLayoutProps) {
   const { supabase, user } = await getCurrentUser();
   const profile =

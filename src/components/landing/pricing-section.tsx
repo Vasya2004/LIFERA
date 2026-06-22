@@ -1,91 +1,51 @@
 import Link from "next/link";
-import { ArrowUpRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
-type PlanTier = {
-  badge?: string;
-  cta: string;
+import {
+  PLAN_AUDIENCE,
+  PLAN_COMING_SOON,
+  PLAN_CTAS,
+  PLAN_INCLUDED_NOW,
+  PLAN_LABELS,
+  PLAN_PRICES,
+  PLAN_RECOMMENDED,
+  PLAN_ROLES,
+  PLAN_VALUE_PROMISES,
+} from "@/lib/domain/plan-catalog";
+import type { PlanTier } from "@/lib/domain/types";
+
+type PricingPlan = {
+  comingSoon: string[];
+  cta: { href: string; label: string };
   description: string;
   features: string[];
-  href: string;
+  glow: "center" | "left" | "right";
   name: string;
   orderClass: string;
   price: string;
   priceNote: string;
+  recommended?: boolean;
   subtitle: string;
+  tier: PlanTier;
   variant: "default" | "featured";
-  glow: "left" | "center" | "right";
 };
 
-const plans: PlanTier[] = [
-  {
-    cta: "Начать бесплатно",
-    description: "Для знакомства с Life RPG-системой и запуска первой траектории развития.",
-    features: [
-      "До 3 активных целей",
-      "До 2 активных челленджей",
-      "До 5 активных привычек",
-      "Базовый Dashboard",
-      "XP, уровни и базовые достижения",
-      "3 AI-рекомендации в неделю",
-      "История прогресса за 7 дней",
-    ],
-    href: "/register",
-    name: "Free",
-    orderClass: "order-2 lg:order-1",
-    price: "0 ₽",
-    priceNote: "навсегда",
-    subtitle: "Стартовая прокачка",
-    variant: "default",
-    glow: "left",
-  },
-  {
-    badge: "Рекомендуемый",
-    cta: "Выбрать Pro",
-    description:
-      "Для тех, кто хочет системно прокачивать цели, привычки, навыки, здоровье и финансы.",
-    features: [
-      "Неограниченные цели",
-      "Неограниченные челленджи",
-      "Неограниченные привычки",
-      "Расширенная аналитика прогресса",
-      "AI-декомпозиция целей",
-      "AI-генерация челленджей",
-      "Premium-шаблоны",
-      "История прогресса без ограничений",
-    ],
-    href: "/register?plan=pro",
-    name: "Pro",
-    orderClass: "order-1 lg:order-2",
-    price: "499 ₽",
-    priceNote: "в месяц",
-    subtitle: "Полная система развития",
-    variant: "featured",
-    glow: "center",
-  },
-  {
-    cta: "Выбрать Ultra",
-    description:
-      "Для пользователей, которым нужны персональные стратегии, глубокий анализ прогресса и максимум AI-возможностей.",
-    features: [
-      "Всё из Pro",
-      "Продвинутый AI Ассистент",
-      "Глубокий анализ просадок",
-      "Персональные стратегии развития",
-      "Недельные и месячные AI-отчёты",
-      "Расширенная аналитика Life Score",
-      "Ultra-достижения",
-      "Ранний доступ к новым функциям",
-    ],
-    href: "/register?plan=ultra",
-    name: "Ultra",
-    orderClass: "order-3 lg:order-3",
-    price: "999 ₽",
-    priceNote: "в месяц",
-    subtitle: "AI и глубокая аналитика",
-    variant: "default",
-    glow: "right",
-  },
-];
+const plans: PricingPlan[] = (["free", "pro", "ultra"] as const).map((tier) => ({
+  comingSoon: PLAN_COMING_SOON[tier],
+  cta: PLAN_CTAS[tier],
+  description: PLAN_AUDIENCE[tier],
+  features: PLAN_INCLUDED_NOW[tier].map((item) => item.label),
+  glow: tier === "free" ? "left" : tier === "pro" ? "center" : "right",
+  name: PLAN_LABELS[tier],
+  orderClass:
+    tier === "pro" ? "order-1 lg:order-2" : tier === "free" ? "order-2 lg:order-1" : "order-3 lg:order-3",
+  price: PLAN_PRICES[tier].amount,
+  priceNote: PLAN_PRICES[tier].note,
+  recommended: tier === PLAN_RECOMMENDED,
+  subtitle: PLAN_ROLES[tier],
+  tier,
+  variant: tier === PLAN_RECOMMENDED ? "featured" : "default",
+}));
 
 type PricingSectionProps = {
   id?: string;
@@ -105,9 +65,6 @@ function PlanButton({
     return (
       <Link className="pricing-btn pricing-btn-featured group" href={href}>
         <span>{label}</span>
-        <span className="pricing-btn-icon pricing-btn-icon-dark">
-          <ArrowUpRight size={16} strokeWidth={2.25} />
-        </span>
       </Link>
     );
   }
@@ -115,14 +72,11 @@ function PlanButton({
   return (
     <Link className="pricing-btn pricing-btn-default group" href={href}>
       <span>{label}</span>
-      <span className="pricing-btn-icon">
-        <ArrowUpRight className="text-[#F97316]" size={16} strokeWidth={2.25} />
-      </span>
     </Link>
   );
 }
 
-function PricingCard({ plan }: { plan: PlanTier }) {
+function PricingCard({ plan }: { plan: PricingPlan }) {
   const isFeatured = plan.variant === "featured";
 
   return (
@@ -131,6 +85,7 @@ function PricingCard({ plan }: { plan: PlanTier }) {
         "pricing-card relative flex h-full flex-col overflow-hidden rounded-[28px] border p-8 sm:p-9",
         plan.orderClass,
         isFeatured ? "pricing-card-featured z-10" : "pricing-card-default",
+        plan.tier === "ultra" ? "border-[rgb(129_140_248/0.18)]" : "",
       ].join(" ")}
     >
       <span
@@ -144,8 +99,8 @@ function PricingCard({ plan }: { plan: PlanTier }) {
       />
 
       <div className="relative flex flex-1 flex-col">
-        {plan.badge ? (
-          <span className="pricing-badge mb-3 inline-flex w-fit">{plan.badge}</span>
+        {plan.recommended ? (
+          <span className="pricing-badge mb-3 inline-flex w-fit">Рекомендуем</span>
         ) : (
           <span aria-hidden className="mb-3 block h-[22px]" />
         )}
@@ -162,12 +117,13 @@ function PricingCard({ plan }: { plan: PlanTier }) {
           <span className="text-[13px] text-[#8C8C8C]">/ {plan.priceNote}</span>
         </div>
 
-        <p className="mt-3 text-[13px] leading-[1.5] text-[#9CA3AF]">{plan.description}</p>
+        <p className="mt-3 text-[13px] leading-[1.5] text-[#B8B8B8]">{PLAN_VALUE_PROMISES[plan.tier]}</p>
+        <p className="mt-2 text-[13px] leading-[1.5] text-[#9CA3AF]">{plan.description}</p>
 
         <div className="my-6 h-px bg-[rgb(255_255_255/0.08)]" />
 
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
-          Включено
+          Доступно сейчас
         </p>
         <ul className="mt-3 flex-1 space-y-2">
           {plan.features.map((feature) => (
@@ -183,7 +139,22 @@ function PricingCard({ plan }: { plan: PlanTier }) {
           ))}
         </ul>
 
-        <PlanButton href={plan.href} label={plan.cta} variant={plan.variant} />
+        {plan.comingSoon.length > 0 ? (
+          <>
+            <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
+              Скоро
+            </p>
+            <ul className="mt-3 space-y-2">
+              {plan.comingSoon.map((item) => (
+                <li className="text-[13px] leading-[1.5] text-[#8C8C8C]" key={item}>
+                  {item} · <span className="text-[#6B7280]">Скоро</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+
+        <PlanButton href={plan.cta.href} label={plan.cta.label} variant={plan.variant} />
       </div>
     </article>
   );
@@ -206,16 +177,15 @@ export function PricingSection({ id = "pricing", showPageHeader = false }: Prici
 
         <header className="max-w-[640px]">
           <h2 className="text-[clamp(1.875rem,4vw,3rem)] font-semibold leading-[1.1] tracking-tight text-[var(--landing-text)]">
-            {showPageHeader ? "Тарифы Lifera" : "Выбери план прокачки"}
+            {showPageHeader ? "Тарифы Lifera" : "Выберите уровень системы"}
           </h2>
           <p className="mt-4 max-w-[540px] text-[15px] leading-[1.5] text-[var(--landing-text-secondary)] sm:text-base">
-            Начни бесплатно, а когда система станет частью твоего развития — открой Pro или
-            Ultra.
+            Free — стартовая система. Pro — полная Life OS. Ultra — AI-стратег с глубокими отчётами,
+            когда они будут готовы.
           </p>
           {showPageHeader ? (
             <p className="mt-3 text-sm leading-[1.5] text-[var(--landing-text-muted)]">
-              Оплата на этапе MVP подключается через регистрацию и demo-активацию плана. Payment
-              provider будет добавлен позже.
+              Оплата пока не подключена. Выбор Pro или Ultra сохраняется как намерение при регистрации.
             </p>
           ) : null}
         </header>
@@ -228,16 +198,13 @@ export function PricingSection({ id = "pricing", showPageHeader = false }: Prici
 
         <div className="pricing-bottom-cta mt-14 text-center lg:mt-20">
           <p className="text-lg font-medium text-[var(--landing-text)] sm:text-xl">
-            Не знаешь, какой план выбрать?
+            Не уверены, какой уровень нужен?
           </p>
           <p className="mx-auto mt-3 max-w-md text-sm leading-[1.5] text-[var(--landing-text-secondary)] sm:text-[15px]">
-            Начни бесплатно — обновишь позже, когда поймёшь, что тебе нужно.
+            Начните бесплатно — обновите позже, когда система станет частью вашего ритма.
           </p>
           <Link className="pricing-bottom-cta-btn group mt-8 inline-flex" href="/register">
             <span>Начать бесплатно</span>
-            <span className="pricing-btn-icon pricing-btn-icon-dark">
-              <ArrowUpRight size={16} strokeWidth={2.25} />
-            </span>
           </Link>
         </div>
       </div>

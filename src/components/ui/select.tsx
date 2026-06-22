@@ -17,20 +17,21 @@ export function Select({
 }: SelectProps) {
   const selectId = id ?? props.name;
   const messageId = selectId ? `${selectId}-message` : undefined;
+  const invalidProps = error ? ({ "aria-invalid": "true" } as const) : {};
 
   return (
     <label className="grid gap-2 text-sm font-medium text-foreground">
       {label ? <span>{label}</span> : null}
       <select
         aria-describedby={error || helpText ? messageId : undefined}
-        aria-invalid={error ? true : undefined}
         className={[
-          "h-[var(--input-height-md)] rounded-[var(--radius-control)] border border-border bg-surface px-4 text-foreground outline-none transition-[border-color,box-shadow,background-color] duration-200",
-          "focus:border-ring focus:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-60",
+          "h-[var(--input-height-md)] rounded-[var(--radius-control)] border border-border bg-[var(--input-surface)] px-4 text-foreground outline-none transition-[border-color,box-shadow,background-color] duration-200",
+          "hover:bg-[var(--input-surface-hover)] focus:border-ring focus:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-60",
           error ? "border-danger focus:border-danger focus:shadow-none" : "",
           className,
         ].join(" ")}
         id={selectId}
+        {...invalidProps}
         {...props}
       >
         {children}

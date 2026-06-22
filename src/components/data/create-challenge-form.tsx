@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlanLimitAlert } from "@/components/ui/plan-limit-alert";
 import { Select } from "@/components/ui/select";
-import { isPlanLimitPayload } from "@/lib/api/plan-limit";
+import { useToast } from "@/components/ui/toast-provider";
+import { handleMutationError, showMutationSuccess } from "@/lib/ui/feedback";
 
 type GoalOption = {
   id: string;
@@ -32,9 +33,9 @@ export function CreateChallengeForm({
   templateId,
 }: CreateChallengeFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [isPlanLimit, setIsPlanLimit] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -46,7 +47,6 @@ export function CreateChallengeForm({
     setLoading(true);
     setError(null);
     setIsPlanLimit(false);
-    setMessage(null);
 
     const formData = new FormData(event.currentTarget);
     const goalId = String(formData.get("goal_id") ?? "");
@@ -64,17 +64,22 @@ export function CreateChallengeForm({
       method: "POST",
     });
 
-    const payload = await response.json().catch(() => ({ error: "Не удалось создать челлендж." }));
+    const payload = await response.json().catch(() => ({ error: "Не удалось создать привычку." }));
     setLoading(false);
 
     if (!response.ok) {
-      setIsPlanLimit(isPlanLimitPayload(payload));
-      setError(payload.error ?? "Не удалось создать челлендж.");
+      const result = handleMutationError(toast, payload, "Не удалось создать привычку.");
+      setIsPlanLimit(result.isPlanLimit);
+      setError(
+        typeof payload === "object" && payload && "error" in payload && typeof payload.error === "string"
+          ? payload.error
+          : "Не удалось создать привычку.",
+      );
       return;
     }
 
+    showMutationSuccess(toast, "Привычка создана", "Откройте этапы и начните движение.");
     const challengeId = payload?.challenge?.id;
-    setMessage("Челлендж создан.");
     router.refresh();
     if (challengeId) {
       router.push(`/challenges/${challengeId}`);
@@ -131,13 +136,8 @@ export function CreateChallengeForm({
           </p>
         )
       ) : null}
-      {message ? (
-        <p className="rounded-[var(--radius-control)] border border-[color:var(--border-primary-subtle)] bg-primary-subtle/40 px-4 py-3 text-sm text-foreground">
-          {message}
-        </p>
-      ) : null}
-      <Button loading={loading} type="submit">
-        {templateId ? "Из шаблона" : "Создать челлендж"}
+      <Button loading={loading} loadingLabel="Создаём..." type="submit">
+        {templateId ? "Из шаблона" : "Создать привычку"}
       </Button>
     </form>
   );

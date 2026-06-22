@@ -20,7 +20,7 @@ export function UpgradeGate({ children, description, title }: UpgradeGateProps) 
           className="inline-flex h-[var(--button-height-sm)] w-fit items-center justify-center rounded-[var(--radius-control)] bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[var(--primary-hover)]"
           href="/plan"
         >
-          Перейти к Premium
+          Сравнить уровни Lifera
         </Link>
       </div>
     </Card>

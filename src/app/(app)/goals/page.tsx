@@ -1,107 +1,73 @@
-import { PageTitle } from "@/components/layout/page-title";
-import { CreateGoalForm } from "@/components/data/create-goal-form";
-import { GoalActions } from "@/components/data/goal-actions";
-import { GoalEditForm } from "@/components/data/goal-edit-form";
-import { GoalCard } from "@/components/ui/goal-card";
+import { GoalCreateModal } from "@/components/goals/goal-create-modal";
+import { GoalsList } from "@/components/goals/goals-list";
+import { GoalsSummary } from "@/components/goals/goals-summary";
+import { PageActionRegistration } from "@/components/layout/page-actions";
+import { PageContent, PageGrid } from "@/components/layout/page-content";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getGoalsWithChallenges } from "@/lib/domain/goals";
-import type { GoalStatus } from "@/lib/domain/types";
-
-const sections: Array<{ id: GoalStatus; title: string }> = [
-  { id: "active", title: "Активные" },
-  { id: "backlog", title: "Бэклог" },
-  { id: "completed", title: "Завершённые" },
-  { id: "archived", title: "Архив" },
-];
+import { getGoalsPageData } from "@/lib/domain/goals-page";
 
 export default async function GoalsPage() {
   const { supabase, user } = await getCurrentUser();
-  let goals: Awaited<ReturnType<typeof getGoalsWithChallenges>>["goals"] = [];
+  let data: Awaited<ReturnType<typeof getGoalsPageData>> | null = null;
   let loadError: string | null = null;
 
   if (supabase && user) {
     try {
-      const data = await getGoalsWithChallenges(supabase, user.id);
-      goals = data.goals;
+      data = await getGoalsPageData(supabase, user.id);
     } catch (error) {
-      loadError =
-        error instanceof Error ? error.message : "Не удалось загрузить цели.";
+      loadError = error instanceof Error ? error.message : "Не удалось загрузить цели.";
     }
   }
 
+  const primaryItem =
+    data?.active.find((item) => item.isPrimary) ??
+    data?.active[0] ??
+    data?.backlog.find((item) => item.isPrimary) ??
+    null;
+  const activeMissionCount =
+    data?.active.reduce(
+      (sum, item) =>
+        sum + item.goal.linkedChallenges.filter((challenge) => challenge.status === "active").length,
+      0,
+    ) ?? 0;
+
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid content-start gap-6">
-        <PageTitle subtitle="Главные направления развития." title="Цели" />
+    <PageContent className="min-h-[calc(100vh-var(--topbar-height))]">
+      {supabase && user ? (
+        <PageActionRegistration actions={<GoalCreateModal wishes={data?.wishes ?? []} />} />
+      ) : null}
 
-        {loadError ? (
-          <Card className="border-danger/25 bg-danger-subtle">
-            <p className="text-sm text-danger-foreground">{loadError}</p>
-          </Card>
-        ) : null}
-
-        {!loadError && goals.length === 0 ? (
-          <EmptyState description="Создайте цель или завершите onboarding." title="Пока нет целей" />
-        ) : null}
-
-        {sections.map((section) => {
-          const sectionGoals = goals.filter((goal) => goal.status === section.id);
-          if (sectionGoals.length === 0) {
-            return null;
-          }
-
-          return (
-            <section className="grid gap-4" key={section.id}>
-              <h2 className="text-xl font-semibold">{section.title}</h2>
-              {sectionGoals.map((goal) => {
-                const primaryChallenge = goal.linkedChallenges.find(
-                  (item) => item.status === "active",
-                ) ?? goal.linkedChallenges[0];
-
-                return (
-                  <div key={goal.id}>
-                    <GoalCard
-                      createdAt={goal.created_at}
-                      lifeArea={goal.life_area}
-                      linkedChallengeHref={
-                        primaryChallenge ? `/challenges/${primaryChallenge.id}` : null
-                      }
-                      linkedChallengeTitle={primaryChallenge?.title ?? null}
-                      linkedChallengesCount={goal.linkedChallenges.length}
-                      progress={Number(goal.progress)}
-                      status={goal.status}
-                      targetDate={goal.target_date}
-                      title={goal.title}
-                    />
-                    {supabase && user ? (
-                      <>
-                        <GoalEditForm goal={goal} />
-                        <GoalActions goalId={goal.id} status={goal.status} />
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </section>
-          );
-        })}
-      </div>
-
-      <aside className="grid content-start gap-6">
-        <Card>
-          <h2 className="text-xl font-semibold">Новая цель</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Free: до 3 активных.</p>
-          <div className="mt-4">
-            {supabase && user ? (
-              <CreateGoalForm />
-            ) : (
-              <p className="text-sm text-muted-foreground">Войдите, чтобы создавать цели.</p>
-            )}
-          </div>
+      {loadError ? (
+        <Card className="border-danger/25 bg-danger-subtle">
+          <p className="text-sm text-danger-foreground">{loadError}</p>
         </Card>
-      </aside>
-    </section>
+      ) : null}
+
+      {!supabase || !user ? (
+        <Card variant="muted">
+          <p className="text-sm text-muted-foreground">Войдите, чтобы управлять целями.</p>
+        </Card>
+      ) : null}
+
+      {data ? (
+        <PageGrid>
+          <GoalsSummary
+            activeMissionCount={activeMissionCount}
+            primaryItem={primaryItem}
+            summary={data.summary}
+          />
+          <div className="col-span-12 min-w-0" id="all-goals">
+            <GoalsList
+              active={data.active}
+              archived={data.archived}
+              backlog={data.backlog}
+              completed={data.completed}
+              wishes={data.wishes}
+            />
+          </div>
+        </PageGrid>
+      ) : null}
+    </PageContent>
   );
 }

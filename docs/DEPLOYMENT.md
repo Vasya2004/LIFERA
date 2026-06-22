@@ -87,6 +87,21 @@ node scripts/smoke.mjs
 
 Smoke verifies: env, Supabase tables, migrations 0005/0006, stage readiness scripts, and HTTP routes.
 
+Stage 10 production MVP:
+
+```bash
+node scripts/production-qa.mjs
+node scripts/diploma-qa.mjs
+```
+
+Full local Playwright regression (with dev server):
+
+```bash
+DIPLOMA_QA_FULL=1 node scripts/diploma-qa.mjs
+```
+
+Demo script for diploma defense: `docs/DEMO_SCRIPT.md`.
+
 ## Post-deploy checklist
 
 1. `SMOKE_BASE_URL=https://lifera.app node scripts/smoke.mjs` — pass

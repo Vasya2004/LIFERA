@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonPlanLimitError } from "@/lib/api/plan-limit";
-import { jsonError, jsonOk } from "@/lib/api/response";
+import { jsonError, jsonOk, parseJsonBody } from "@/lib/api/response";
 import { createChallengeWithStages } from "@/lib/domain/challenges";
 import { isPlanLimitError } from "@/lib/domain/plan-limit-error";
 import { assertCanUseAiGeneration } from "@/lib/domain/subscription";
@@ -18,17 +18,24 @@ export async function POST(request: Request) {
     return jsonPlanLimitError(gate.reason ?? "AI-генерация недоступна на Free-плане.");
   }
 
-  const body = await request.json();
+  const parsed = await parseJsonBody(request);
+
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as Record<string, unknown>;
   const goalTitle = String(body.goal_title ?? "Новая цель").trim();
+  const goalId = typeof body.goal_id === "string" && body.goal_id ? body.goal_id : null;
 
   try {
     const challenge = await createChallengeWithStages({
-      description: `Rule-based структура челленджа для цели "${goalTitle}".`,
+      description: `Rule-based структура плана для цели "${goalTitle}".`,
       difficulty: "medium",
       durationDays: 7,
-      goalId: body.goal_id ?? null,
+      goalId,
       supabase,
-      title: `Челлендж: ${goalTitle}`,
+      title: `План цели: ${goalTitle}`,
       userId: user.id,
     });
 

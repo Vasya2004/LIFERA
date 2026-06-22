@@ -67,9 +67,8 @@ const requiredFiles = [
   "src/app/api/habits/[id]/route.ts",
   "src/app/api/habits/[id]/complete/route.ts",
   "src/app/(app)/habits/page.tsx",
-  "src/components/data/habit-card.tsx",
+  "src/components/habits/habit-checklist-item.tsx",
   "src/components/data/create-habit-form.tsx",
-  "src/components/data/dashboard-habits-block.tsx",
   "supabase/migrations/0002_habits_foundation.sql",
   "supabase/migrations/0003_habit_achievements.sql",
 ];

@@ -32,7 +32,7 @@ export function goalLimitMessage() {
 }
 
 export function challengeLimitMessage() {
-  return `На Free-плане доступно до ${FREE_LIMITS.activeChallenges} активных челленджей. Откройте раздел «План», чтобы снять лимит или активировать demo Pro.`;
+  return `На Free-плане доступно до ${FREE_LIMITS.activeChallenges} активных планов цели. Откройте раздел «План», чтобы снять лимит или активировать demo Pro.`;
 }
 
 export function habitLimitMessage() {
@@ -40,7 +40,7 @@ export function habitLimitMessage() {
 }
 
 export function proTemplateLimitMessage() {
-  return "Premium-шаблоны доступны на Pro и Ultra. Откройте раздел «План» для demo-активации или будущей оплаты.";
+  return "Pro-шаблоны доступны на Pro и Ultra. Откройте раздел «План» для demo-активации или будущей оплаты.";
 }
 
 export function aiWeeklyLimitMessage() {
@@ -48,7 +48,7 @@ export function aiWeeklyLimitMessage() {
 }
 
 export function aiGenerationLimitMessage() {
-  return "AI-генерация челленджей доступна на Pro и Ultra. Откройте раздел «План» для demo-активации или будущей оплаты.";
+  return "AI-генерация планов цели доступна на Pro и Ultra. Откройте раздел «План» для demo-активации или будущей оплаты.";
 }
 
 function weekStartIsoDate() {

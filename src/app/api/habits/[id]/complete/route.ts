@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonError, jsonOk } from "@/lib/api/response";
 import { completeHabit } from "@/lib/domain/habits";
@@ -24,6 +26,8 @@ export async function POST(_: Request, { params }: Params) {
 
   try {
     const result = await completeHabit(serviceSupabase, user.id, id);
+    revalidatePath("/habits");
+    revalidatePath("/dashboard");
     return jsonOk(result);
   } catch (completeError) {
     return jsonError(

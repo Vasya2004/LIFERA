@@ -1,4 +1,8 @@
-# Lifera UX Patterns v0.1
+# Lifera UX Patterns
+
+## Терминология (Stage 1)
+
+В app-части используйте русские product labels: **цели**, **миссии** (user-facing label для технического `/habits`), **карта желаний** внутри целей, **навыки**, **здоровье**, **финансы**, **опыт**, **уровень**, **индекс жизни**, **достижения**, **Ассистент Lifera**. App shell — premium dark command center (`globals.css`, `.app-shell-bg`).
 
 ## 1. Назначение документа
 
@@ -8,13 +12,13 @@
 
 ## 2. Общий UX-подход Lifera
 
-Lifera должен ощущаться как premium personal operating system: серьезная, понятная и ежедневная система для управления целями, действиями, проектами, календарем, прогрессом и AI-рекомендациями.
+Lifera должен ощущаться как premium personal operating system: серьезная, понятная и ежедневная система для управления целями, миссиями, прогрессом, сферами жизни, достижениями и AI-рекомендациями.
 
 Ключевые установки:
 
 - интерфейс должен быть взрослым, спокойным и пригодным для ежедневного использования;
 - геймификация должна быть сдержанной и работать как слой данных;
-- AI Ассистент должен помогать пользователю выбрать следующий практический шаг;
+- **Ассистент Lifera** должен помогать пользователю выбрать следующий практический шаг;
 - dashboard должен давать понимание текущего прогресса за 5 секунд;
 - визуальная система должна поддерживать ощущение контроля, ясности и накопительного развития.
 
@@ -68,7 +72,7 @@ Lifera должен ощущаться как premium personal operating system:
 - compact progress summary;
 - working blocks for actions, habits and goals;
 - optional right rail for AI Ассистент;
-- ключевые зоны: фокус дня, Действия, Календарь, Цели, XP, AI Ассистент, Достижения;
+- ключевые зоны: фокус дня, цели, миссии, XP, сферы жизни, AI Ассистент, Достижения;
 - dashboard ощущается как рабочий центр управления, а не как витрина продукта.
 
 ### 5. Progress-first layout
@@ -106,27 +110,28 @@ Lifera должен ощущаться как premium personal operating system:
 - breadcrumbs появляются только на detail pages;
 - command/search input предусмотрен как future pattern.
 
-Core sidebar order:
+Stage 1 sidebar order:
 
 1. Главная.
-2. Действия.
-3. Проекты.
-4. Календарь.
-5. Цели.
-6. Достижения.
-7. Навыки.
-8. Финансы.
-9. Здоровье.
-10. AI Ассистент.
+2. Цели.
+3. Миссии.
+4. Навыки.
+5. Здоровье.
+6. Финансы.
+7. Достижения.
+8. Ассистент.
+9. План.
+10. Профиль.
 11. Настройки.
-12. Профиль / user block.
 
 Правила:
 
-- Задачи и Привычки находятся внутри Действия.
-- Желания находятся внутри Цели.
+- Миссии являются top-level и используют технический `/habits` backend, но не должны превращаться в generic habit tracker.
+- Карта желаний доступна только внутри целей: `/goals/wishes`.
+- `/challenges` и `/progress` не выводятся в основной UI; это hidden/internal legacy routes.
+- Здоровье и Финансы являются top-level life-area разделами.
+- Навыки являются top-level разделом.
 - AI Coach как UI label не использовать.
-- Аналитика, Рефлексия, Сферы жизни, Магазин и Хранилище не являются top-level разделами Core Navigation v0.2.
 
 ## 4. UX-паттерны для /auth
 
@@ -173,23 +178,43 @@ Core sidebar order:
 
 ## 6. UX-паттерны для /onboarding
 
-Onboarding должен ощущаться как настройка персональной операционной системы, а не как tutorial игры.
+Onboarding — premium setup flow: пользователь собирает стартовую систему прогресса, а не заполняет обычную форму.
 
-Базовый wizard на 4 шага:
+**Stage 5 wizard (5 шагов):**
 
-1. Выбор сфер развития.
-2. Создание первой цели.
-3. Выбор стартовых привычек.
-4. Первичная настройка AI Ассистента.
+1. **Фокус** — одна сфера жизни (карточки с selected state, orange accent).
+2. **Цель** — название + краткий контекст, сфера из шага 1.
+3. **Миссия** — рекомендованная стартовая миссия «7 дней системного старта» (5 этапов, без fake-выбора шаблонов).
+4. **Миссии** — до 3 рекомендованных регулярных миссий по сфере; создаются через onboarding API, если у пользователя ещё нет habits.
+5. **Проверка** — preview системы + checkbox подтверждения + CTA «Создать систему».
+
+Оболочка:
+
+- отдельный onboarding shell (dark premium, lava background, Lifera mark, «Выйти»);
+- без public nav / pricing / EN tagline;
+- stepper: progress bar + «Шаг N из 5» на mobile;
+- loading: «Собираем вашу систему…» → «Система создана» → redirect.
 
 Принципы:
 
 - один главный шаг на экране;
-- понятный progress indicator;
-- спокойные подписи и объяснения;
-- без игровых миссий, кампаний и декоративных наград;
-- на раннем этапе можно сделать статичный список шагов;
-- позже можно добавить сохранение прогресса и возврат к незавершенному onboarding.
+- Lifera-терминология: цель, миссия, опыт, фокус дня;
+- без Life RPG / MVP / fake AI;
+- idempotent submit — повтор не создаёт дубли goal/mission/rituals.
+
+## 6.1 UX-паттерны для /pricing и /plan
+
+**Value tiers (единый язык):**
+
+- Free — «Стартовая система»
+- Pro — «Полная Life OS» (recommended)
+- Ultra — «AI-стратег» (subtle premium accent; future AI — «Скоро»)
+
+**/pricing (public):** dark premium cards, цены 0 / 499 / 999 ₽, CTA → register flow, блок «Оплата пока не подключена».
+
+**/plan (in-app):** не billing screen — hero текущего плана, comparison cards, feature matrix, honest «Оплата скоро», без raw provider/status.
+
+**Intended plan:** после `?plan=pro|ultra` — notice «Вы выбрали …, доступ Free до оплаты».
 
 ## 7. UX-паттерны для dashboard
 
@@ -212,7 +237,23 @@ Dashboard hierarchy:
 2. XP / Level / Streak - ключевые метрики.
 3. Today Tasks, Habits, Goals Progress, AI Ассистент - рабочие блоки.
 4. Achievements, nearest reward, life areas / future widgets - поддерживающий долгосрочный прогресс.
-5. Health, finance, skills, calendar preview, project progress - secondary/future widgets.
+5. Health, finance, skills — compact branch dashboards (hero + journal/trend + linked activities + next step), не CRUD-формы на первом экране.
+
+## Branch pages (Skills / Health / Finance)
+
+Единая структура веток:
+
+1. `PageTitle` + primary CTA + «Смотреть прогресс».
+2. Branch hero (`PageHeroCard` + metrics).
+3. Branch-specific blocks (competencies / journal / trend).
+4. `Связанные действия` — goals/missions/rituals по life area.
+5. `Следующий шаг` — rule-based recommendation с рабочим CTA.
+
+Позиционирование:
+
+- `/health` — состояние и ритуалы, compact disclaimer «не медицинская рекомендация».
+- `/finance` — финансовая устойчивость, `formatCurrency()` (₽), «не финансовая рекомендация».
+- `/skills` — развитие компетенций, edit через modal, без inline `<details>` edit.
 
 Верхняя сводка:
 
@@ -422,6 +463,99 @@ Motion:
 - no confetti by default;
 - respect `prefers-reduced-motion`.
 
+### Feedback system (Stage 8)
+
+Единый feedback layer для ключевых действий пользователя.
+
+**Toast types:**
+
+| variant | use |
+| --- | --- |
+| `success` | сохранение, создание сущности, достижение |
+| `progress` | XP, завершение ритуала/этапа, level up |
+| `warning` | plan limit, мягкое предупреждение |
+| `error` | ошибка API / сети |
+| `info` | повторное действие без XP |
+
+**Toast rules:**
+
+- dark graphite surface, subtle border;
+- orange accent для progress/success/action;
+- muted red для error;
+- auto-dismiss ~4s;
+- mobile: viewport выше bottom nav (`bottom: calc(5.5rem + safe-area)`);
+- текст на русском, без icon-only meaning;
+- optional CTA link (например «Открыть план»).
+
+**XP feedback rules:**
+
+- XP показывается только из API response;
+- не начислять XP на client;
+- при `alreadyCompleted` — info toast «Повторный опыт не начисляется»;
+- achievement unlock — отдельный toast только если API вернул `achievements[]`;
+- level up — toast только если level вырос по данным API.
+
+**Loading states:**
+
+- disabled + loading label на русском;
+- no double submit;
+- examples: «Отмечаем...», «Сохраняем...», «Создаём...», «Завершаем...».
+
+**Inline feedback:**
+
+- plan limit — `PlanLimitAlert` + toast;
+- form validation — inline error под полем;
+- submit result — toast, не каждый input change.
+
+**Adult gamification microinteractions:**
+
+- subtle motion only: card hover lift 1px, progress bar smooth fill, toast slide/fade;
+- no confetti, bounce, particle loops;
+- progression moments: button state change, toast +XP, progress refresh — без game voice.
+
+### Mobile layout (Stage 9)
+
+**Viewport targets:** 375, 390, 414, 430px width — no horizontal scroll, no clipped CTAs.
+
+**App shell:**
+
+- bottom nav fixed with safe-area inset;
+- `.app-page` adds mobile bottom padding via `--mobile-page-padding-bottom`;
+- topbar compact on mobile: truncated title, compact XP pill, «Создать» hidden below `md`;
+- primary bottom nav labels: Главная / Цели / Миссии / Навыки / Ещё.
+- More menu order starts with Здоровье, Финансы, then Достижения, Ассистент, План, Профиль, Настройки. Карта желаний остаётся вкладкой внутри целей, не пунктом mobile menu.
+
+**More menu:**
+
+- opens above bottom nav;
+- scrollable if content exceeds viewport;
+- closes on overlay tap / Escape.
+
+**Touch targets:**
+
+- `.touch-target` utility: min 44×44px for icon-only triggers;
+- action menus use sheet-style modals on mobile (`place-items-end` + safe-area padding).
+
+**Forms:**
+
+- full-width inputs;
+- modal forms scroll inside `.mobile-sheet-panel`;
+- submit buttons remain visible; loading labels on submit.
+
+**Toast placement:**
+
+- viewport anchored above `--mobile-nav-height`;
+- width `min(22rem, calc(100vw - 2rem))`.
+
+**Page hierarchy on mobile:**
+
+- current state / hero first;
+- create forms in sidebar or lower on page;
+- destructive actions in menus;
+- challenge detail: stages first, edit/manage collapsed by default.
+
+**QA command:** `node scripts/mobile-qa.mjs`
+
 ### Accessibility
 
 Baseline:
@@ -473,5 +607,5 @@ CTA должны быть конкретными: "Создать цель", "Д
 - не добавлять лишние функции до Core MVP;
 - не превращать геймификацию в игровой интерфейс;
 - AI Ассистент в первой версии показывать как рекомендацию следующего шага;
-- навигацию строить по Core Navigation v0.2: Главная, Действия, Проекты, Календарь, Цели, Достижения, Навыки, Финансы, Здоровье, AI Ассистент, Настройки, Профиль;
+- навигацию строить по IA: Главная, Цели, Миссии, Навыки, Здоровье, Финансы, Достижения, Ассистент, План, Профиль, Настройки;
 - новые UI-решения должны поддерживать Adult Gamified Personal OS.

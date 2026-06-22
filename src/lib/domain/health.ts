@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getBranchActivities, sanitizeBranchNote } from "@/lib/domain/branches";
+import { todayIsoDate } from "@/lib/utils/date";
+import { getBranchActivities, sanitizeBranchNote, type BranchRecommendation } from "@/lib/domain/branches";
 import type { Challenge, Goal, Habit } from "@/lib/domain/types";
 
 export const HEALTH_METRIC_TYPES = [
@@ -35,21 +36,40 @@ export type HealthInsight = {
   title: string;
 };
 
+export type HealthStatusLabel = "declining" | "rising" | "stable";
+
+export const HEALTH_STATUS_LABELS: Record<HealthStatusLabel, string> = {
+  declining: "Есть просадка",
+  rising: "Хорошая динамика",
+  stable: "Стабильно",
+};
+
+export type HealthTrendDay = {
+  activity: number;
+  date: string;
+  energy: number;
+  isToday: boolean;
+  label: string;
+  sleep: number;
+};
+
 export type HealthBranchData = {
   activities: {
     challenges: Challenge[];
     goals: Goal[];
     habits: Habit[];
   };
+  allHistory: HealthSnapshot[];
+  hasEnoughDataForDynamics: boolean;
   history: HealthSnapshot[];
   insight: HealthInsight;
   latest: HealthSnapshot | null;
+  recommendation: BranchRecommendation;
+  status: HealthStatusLabel;
+  todayRecord: HealthSnapshot | null;
+  trend: HealthTrendDay[];
   wellnessScore: number;
 };
-
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function clampMetric(type: HealthMetricType, value: number) {
   if (type === "energy_level" || type === "recovery_score") {
@@ -107,40 +127,103 @@ export function computeWellnessScore(snapshot: HealthSnapshot | null) {
   return Math.round(energyPart + recoveryPart + sleepPart + activityPart);
 }
 
-export function buildHealthInsight(input: {
+function dayLabel(date: string) {
+  return new Intl.DateTimeFormat("ru-RU", { weekday: "short" }).format(new Date(`${date}T12:00:00`));
+}
+
+export function computeHealthStatus(input: {
+  history: HealthSnapshot[];
+  latest: HealthSnapshot | null;
+  wellnessScore: number;
+}): HealthStatusLabel {
+  const { history, latest, wellnessScore } = input;
+
+  if (!latest) {
+    return "stable";
+  }
+
+  if (latest.energy_level <= 4 || wellnessScore < 45) {
+    return "declining";
+  }
+
+  if (history.length >= 2) {
+    const previous = history[1];
+    if (wellnessScore >= 65 && wellnessScore > computeWellnessScore(previous)) {
+      return "rising";
+    }
+  } else if (wellnessScore >= 70) {
+    return "rising";
+  }
+
+  return "stable";
+}
+
+function buildHealthTrend(history: HealthSnapshot[]): HealthTrendDay[] {
+  const today = todayIsoDate();
+  const chronological = [...history].reverse().slice(-7);
+
+  return chronological.map((entry) => ({
+    activity: entry.activity_minutes,
+    date: entry.date,
+    energy: entry.energy_level,
+    isToday: entry.date === today,
+    label: dayLabel(entry.date),
+    sleep: entry.sleep_hours,
+  }));
+}
+
+export function buildHealthRecommendation(input: {
   activities: HealthBranchData["activities"];
   latest: HealthSnapshot | null;
-}): HealthInsight {
+}): BranchRecommendation {
   const { activities, latest } = input;
 
   if (!latest) {
     return {
       content:
-        "Внесите первую wellness-запись: энергия, сон, активность и восстановление. Это поможет видеть динамику без медицинских обещаний.",
-      title: "Начните wellness-журнал",
+        "Добавьте первую запись состояния: энергия, сон и активность помогут видеть динамику без медицинских обещаний.",
+      ctaHref: "#health-entry",
+      ctaLabel: "Добавить запись",
+      title: "Добавьте первую запись состояния",
+    };
+  }
+
+  if (latest.energy_level <= 4) {
+    return {
+      content:
+        "Энергия ниже обычного. Добавьте простую привычку восстановления — прогулку, сон или короткую разминку.",
+      ctaHref: "/habits",
+      ctaLabel: "Создать привычку",
+      title: "Добавьте простую привычку восстановления",
     };
   }
 
   if (activities.habits.length === 0) {
     return {
       content:
-        "Добавьте небольшой wellness-ритуал в сфере «Здоровье» — прогулка, растяжка или режим сна — и свяжите его с целью.",
-      title: "Создайте wellness-ритуал",
-    };
-  }
-
-  if (latest.activity_minutes < 20) {
-    return {
-      content:
-        "Активность ниже вашего обычного порога. Можно добавить короткий wellness-шаг — прогулку или лёгкую разминку — без медицинских обещаний.",
-      title: "Мягкий wellness-шаг",
+        "Создайте привычку для здоровья — короткая регулярная практика поможет удерживать ритм восстановления.",
+      ctaHref: "/habits",
+      ctaLabel: "Создать привычку",
+      title: "Создайте привычку для здоровья",
     };
   }
 
   return {
-    content:
-      "Wellness-ветка движется: есть метрики и ритуалы. Продолжайте отслеживать энергию и восстановление в связке с целями.",
-    title: "Стабильная wellness-траектория",
+    content: "Состояние отслеживается. Продолжайте текущий ритм и связывайте его с целями.",
+    ctaHref: "/dashboard",
+    ctaLabel: "Продолжить фокус",
+    title: "Продолжайте текущий ритм",
+  };
+}
+
+export function buildHealthInsight(input: {
+  activities: HealthBranchData["activities"];
+  latest: HealthSnapshot | null;
+}): HealthInsight {
+  const recommendation = buildHealthRecommendation(input);
+  return {
+    content: recommendation.content,
+    title: recommendation.title,
   };
 }
 
@@ -162,8 +245,6 @@ export async function createHealthEntry(
     { metric_type: "recovery_score", value: clampMetric("recovery_score", input.recovery_score) },
   ];
 
-  await supabase.from("health_metrics").delete().eq("user_id", userId).eq("date", date);
-
   const rows = values.map((item) => ({
     date,
     metric_type: item.metric_type,
@@ -172,10 +253,21 @@ export async function createHealthEntry(
     value: item.value,
   }));
 
-  const { error } = await supabase.from("health_metrics").insert(rows);
+  const { error: deleteError } = await supabase
+    .from("health_metrics")
+    .delete()
+    .eq("user_id", userId)
+    .eq("date", date)
+    .in("metric_type", HEALTH_METRIC_TYPES);
 
-  if (error) {
-    throw new Error("Не удалось сохранить wellness-запись.");
+  if (deleteError) {
+    throw new Error("Не удалось сохранить запись состояния.");
+  }
+
+  const { error: insertError } = await supabase.from("health_metrics").insert(rows);
+
+  if (insertError) {
+    throw new Error("Не удалось сохранить запись состояния.");
   }
 
   return { date };
@@ -196,18 +288,27 @@ export async function getHealthBranchData(
   ]);
 
   if (metricsResult.error) {
-    throw new Error("Не удалось загрузить wellness-данные.");
+    throw new Error("Не удалось загрузить данные здоровья.");
   }
 
   const history = groupHealthSnapshots(metricsResult.data ?? []);
   const latest = history[0] ?? null;
   const wellnessScore = computeWellnessScore(latest);
+  const insightInput = { activities, latest };
+  const today = todayIsoDate();
+  const todayRecord = history.find((h) => h.date === today) ?? null;
 
   return {
     activities,
+    allHistory: history,
+    hasEnoughDataForDynamics: history.length >= 2,
     history: history.slice(0, 7),
-    insight: buildHealthInsight({ activities, latest }),
+    insight: buildHealthInsight(insightInput),
     latest,
+    recommendation: buildHealthRecommendation(insightInput),
+    status: computeHealthStatus({ history, latest, wellnessScore }),
+    todayRecord,
+    trend: buildHealthTrend(history.slice(0, 7)),
     wellnessScore,
   };
 }

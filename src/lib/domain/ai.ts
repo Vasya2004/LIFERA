@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Challenge, Goal, Habit } from "@/lib/domain/types";
+
+type RecommendationData = {
+  challenges?: Challenge[];
+  goals?: Goal[];
+  habits?: Habit[];
+};
+
 function daysSince(dateValue: string | null) {
   if (!dateValue) {
     return Number.POSITIVE_INFINITY;
@@ -13,31 +21,36 @@ function daysSince(dateValue: string | null) {
   return Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export async function buildRuleBasedRecommendation(supabase: SupabaseClient, userId: string) {
-  const [{ data: goals }, { data: challenges }, { data: habits }] = await Promise.all([
-    supabase
-      .from("goals")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("challenges")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("habits")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false }),
-  ]);
+export async function buildRuleBasedRecommendation(
+  supabase: SupabaseClient,
+  userId: string,
+  prefetchedData?: RecommendationData
+) {
+  let activeGoals = prefetchedData?.goals;
+  let activeChallenges = prefetchedData?.challenges;
+  let activeHabits = prefetchedData?.habits;
 
-  const activeGoals = goals ?? [];
-  const activeChallenges = challenges ?? [];
-  const activeHabits = habits ?? [];
+  if (!activeGoals || !activeChallenges || !activeHabits) {
+    const [goalsResult, challengesResult, habitsResult] = await Promise.all([
+      !activeGoals
+        ? supabase.from("goals").select("*").eq("user_id", userId).eq("status", "active").order("created_at", { ascending: false })
+        : Promise.resolve({ data: activeGoals }),
+      !activeChallenges
+        ? supabase.from("challenges").select("*").eq("user_id", userId).eq("status", "active").order("created_at", { ascending: false })
+        : Promise.resolve({ data: activeChallenges }),
+      !activeHabits
+        ? supabase.from("habits").select("*").eq("user_id", userId).eq("status", "active").order("created_at", { ascending: false })
+        : Promise.resolve({ data: activeHabits }),
+    ]);
+
+    activeGoals = activeGoals ?? (goalsResult.data ?? []);
+    activeChallenges = activeChallenges ?? (challengesResult.data ?? []);
+    activeHabits = activeHabits ?? (habitsResult.data ?? []);
+  }
+
+  activeGoals = activeGoals ?? [];
+  activeChallenges = activeChallenges ?? [];
+  activeHabits = activeHabits ?? [];
   const weakestGoal = [...activeGoals].sort((a, b) => Number(a.progress) - Number(b.progress))[0];
   const activeChallenge = activeChallenges[0];
   const topStreakHabit = [...activeHabits].sort(
@@ -51,7 +64,7 @@ export async function buildRuleBasedRecommendation(supabase: SupabaseClient, use
     if (!weakestGoal && !activeChallenge) {
       return {
         content:
-          "Создайте первую цель и стартовый челлендж. Затем добавьте небольшой ежедневный ритуал прокачки, чтобы XP шёл не только от миссий.",
+          "Создайте первую цель и регулярную привычку, чтобы XP шёл от устойчивого движения.",
         title: "Начните с одной цели",
         type: "next_step",
       };
@@ -59,26 +72,26 @@ export async function buildRuleBasedRecommendation(supabase: SupabaseClient, use
 
     return {
       content: weakestGoal
-        ? `Создайте первый ритуал прокачки для цели «${weakestGoal.title}». Короткий ежедневный ритуал усилит прогресс без перегруза.`
-        : "Добавьте первый ритуал прокачки в разделе «Привычки», чтобы получать XP за регулярность.",
+        ? `Создайте первую привычку для цели «${weakestGoal.title}». Короткая регулярная практика усилит движение без перегруза.`
+        : "Добавьте первую привычку в разделе «Привычки», чтобы получать XP за регулярность.",
       source_goal_id: weakestGoal?.id ?? null,
-      title: "Запустите первый ритуал",
+      title: "Запустите первую привычку",
       type: "habit_start",
     };
   }
 
   if (staleHabit) {
     return {
-      content: `Ритуал «${staleHabit.title}» давно не выполнялся. Упростите его до 5–10 минут или снизьте частоту — устойчивость важнее идеального объёма.`,
+      content: `Привычка «${staleHabit.title}» давно не выполнялась. Упростите её до 5–10 минут или снизьте частоту — устойчивость важнее идеального объёма.`,
       source_habit_id: staleHabit.id,
-      title: "Упростите ритуал",
+      title: "Упростите привычку",
       type: "habit_recovery",
     };
   }
 
   if (topStreakHabit && Number(topStreakHabit.streak_current) >= 3) {
     return {
-      content: `Серия ${topStreakHabit.streak_current} дней по ритуалу «${topStreakHabit.title}» — сильный сигнал стабильности. Закрепите ритм и свяжите его с ближайшей целью или миссией.`,
+      content: `Серия ${topStreakHabit.streak_current} дней по привычки «${topStreakHabit.title}» — сильный сигнал стабильности. Закрепите ритм.`,
       source_habit_id: topStreakHabit.id,
       title: "Серия растёт — продолжайте",
       type: "habit_momentum",
@@ -91,9 +104,9 @@ export async function buildRuleBasedRecommendation(supabase: SupabaseClient, use
 
   if (goalWithoutHabit) {
     return {
-      content: `У цели «${goalWithoutHabit.title}» пока нет связанного ритуала. Добавьте небольшую ежедневную практику в той же сфере жизни.`,
+      content: `У цели «${goalWithoutHabit.title}» пока нет регулярной привычки. Добавьте небольшую практику в той же сфере жизни.`,
       source_goal_id: goalWithoutHabit.id,
-      title: "Свяжите цель с ритуалом",
+      title: "Добавьте привычку к цели",
       type: "habit_link",
     };
   }
@@ -101,7 +114,7 @@ export async function buildRuleBasedRecommendation(supabase: SupabaseClient, use
   if (!weakestGoal && !activeChallenge) {
     return {
       content:
-        "Создайте первую цель и стартовый челлендж. Lifera начнет считать прогресс, XP и рекомендации после первого этапа.",
+        "Создайте первую цель и регулярную привычку. Lifera начнёт считать XP и рекомендации после первых действий.",
       title: "Начните с одной цели",
       type: "next_step",
     };
@@ -109,7 +122,7 @@ export async function buildRuleBasedRecommendation(supabase: SupabaseClient, use
 
   if (activeChallenge) {
     return {
-      content: `Продолжите челлендж «${activeChallenge.title}». Лучший следующий шаг — завершить текущий активный этап и зафиксировать прогресс.`,
+      content: `Продолжите план «${activeChallenge.title}». Лучший следующий шаг — завершить текущий активный этап и зафиксировать движение.`,
       source_challenge_id: activeChallenge.id,
       title: "Завершите ближайший этап",
       type: "next_step",
@@ -117,9 +130,9 @@ export async function buildRuleBasedRecommendation(supabase: SupabaseClient, use
   }
 
   return {
-    content: `Цель «${weakestGoal.title}» пока имеет самый низкий прогресс. Создайте челлендж на 5 этапов, чтобы превратить ее в измеримую траекторию.`,
+    content: `Цель «${weakestGoal.title}» пока имеет самый низкий прогресс. Добавьте регулярную привычку, чтобы поддержать движение.`,
     source_goal_id: weakestGoal.id,
-    title: "Превратите цель в челлендж",
+    title: "Добавьте привычку к цели",
     type: "goal_analysis",
   };
 }

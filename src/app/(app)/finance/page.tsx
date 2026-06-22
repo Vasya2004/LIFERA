@@ -1,43 +1,79 @@
-import Link from "next/link";
-
-import { PageTitle } from "@/components/layout/page-title";
-import { BranchActivitiesSection } from "@/components/data/branch-activities-section";
-import { BranchInsightCard } from "@/components/data/branch-insight-card";
-import { CreateFinanceEntryForm } from "@/components/data/create-finance-entry-form";
+import { FinanceCreateAction } from "@/components/finance/finance-create-action";
+import { FinanceHero } from "@/components/finance/finance-hero";
+import { FinanceJournal } from "@/components/finance/finance-journal";
+import { FinancePortfolio } from "@/components/finance/finance-portfolio";
+import { FinanceSidePanel } from "@/components/finance/finance-side-panel";
+import { FinanceTrend } from "@/components/finance/finance-trend";
+import { FinanceWishes } from "@/components/finance/finance-wishes";
+import { PageContent } from "@/components/layout/page-content";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Progress } from "@/components/ui/progress";
-import { StatCard } from "@/components/ui/stat-card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { formatDate } from "@/lib/domain/labels";
-import { getFinanceBranchData } from "@/lib/domain/finance";
+import {
+  getFinanceBranchData,
+  getFinancePortfolioData,
+  getFinanceSubscriptions,
+  type FinancePortfolioData,
+  type FinanceSubscription,
+} from "@/lib/domain/finance";
+import { getWishesPageData, type WishesPageData } from "@/lib/domain/wishes-page";
 
 export const dynamic = "force-dynamic";
 
-export default async function FinancePage() {
+type FinanceView = "overview" | "history";
+
+type FinancePageProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+function parseFinanceView(view?: string): FinanceView {
+  if (view === "history" || view === "snapshots") {
+    return "history";
+  }
+
+  return "overview";
+}
+
+export default async function FinancePage({ searchParams }: FinancePageProps) {
+  const params = await searchParams;
+  const view = parseFinanceView(params.view);
   const { supabase, user } = await getCurrentUser();
   let data: Awaited<ReturnType<typeof getFinanceBranchData>> | null = null;
+  let portfolio: FinancePortfolioData | null = null;
+  let wishesData: WishesPageData | null = null;
+  let subscriptions: FinanceSubscription[] = [];
   let loadError: string | null = null;
 
   if (supabase && user) {
     try {
-      data = await getFinanceBranchData(supabase, user.id);
+      [data, portfolio, wishesData, subscriptions] = await Promise.all([
+        getFinanceBranchData(supabase, user.id),
+        getFinancePortfolioData(supabase, user.id).catch(() => null),
+        getWishesPageData(supabase, user.id).catch(() => null),
+        getFinanceSubscriptions(supabase, user.id).catch(() => []),
+      ]);
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Не удалось загрузить финансовые данные.";
     }
   }
 
-  return (
-    <section className="mx-auto grid w-full max-w-6xl gap-6 overflow-x-hidden px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid min-w-0 content-start gap-6">
-        <PageTitle subtitle="Финансовые цели и устойчивость." title="Финансы" />
+  const savingsDelta =
+    data?.latest && data.history[1]
+      ? data.latest.savings_amount - data.history[1].savings_amount
+      : null;
+  const linkedWish =
+    wishesData?.wishes.find(
+      (wish) => wish.status !== "archived" && (Number(wish.target_amount ?? 0) > 0 || wish.category?.toLowerCase().includes("финанс")),
+    ) ?? null;
 
-        <Card variant="muted">
-          <p className="text-sm leading-6 text-muted-foreground">
-            Раздел не является финансовой рекомендацией. Lifera помогает структурировать цели и
-            snapshot накоплений — без инвестиционных советов и банковских интеграций.
-          </p>
-        </Card>
+  return (
+    <PageContent aria-label="Финансы" className="min-h-[calc(100vh-var(--topbar-height))]">
+      <FinanceCreateAction />
+
+      <div
+        aria-label={`Активный раздел финансов: ${view}`}
+        className="grid min-w-0 gap-5 xl:gap-6"
+        role="tabpanel"
+      >
 
         {loadError ? (
           <Card className="border-danger/25 bg-danger-subtle">
@@ -47,124 +83,36 @@ export default async function FinancePage() {
 
         {!supabase || !user ? (
           <Card variant="muted">
-            <p className="text-sm text-muted-foreground">Войдите, чтобы вести финансовый snapshot.</p>
+            <p className="text-sm text-muted-foreground">Войдите, чтобы вести финансовый снимок.</p>
           </Card>
         ) : null}
 
-        {data ? (
-          <>
-            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-              <StatCard
-                detail="индекс устойчивости"
-                label="Stability score"
-                progress={data.financeScore}
-                value={`${data.financeScore}`}
+        {data && view === "overview" ? (
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="grid min-w-0 content-start gap-5 xl:gap-6">
+              <FinanceHero
+                financeScore={data.financeScore}
+                history={data.history}
+                latest={data.latest}
               />
-              <StatCard
-                detail="накопления"
-                label="Сейчас"
-                value={`${data.latest?.savings_amount ?? 0}`}
-              />
-              <StatCard
-                detail="цель"
-                label="Target"
-                value={`${data.latest?.target_amount ?? 0}`}
-              />
-              <StatCard
-                detail="к цели"
-                label="Progress"
-                value={`${data.latest?.savingsProgress ?? 0}%`}
-              />
+              {portfolio ? <FinancePortfolio portfolio={portfolio} /> : null}
+              <FinanceWishes goals={wishesData?.goals ?? []} wishes={wishesData?.wishes ?? []} />
+              <FinanceTrend trend={data.trend} />
+              <p className="text-xs text-muted-foreground">
+                Lifera помогает видеть картину финансов, но не является финансовым консультантом.
+              </p>
             </div>
 
-            <BranchInsightCard content={data.insight.content} title={data.insight.title} />
+            <aside className="min-w-0 self-start">
+              <FinanceSidePanel linkedWish={linkedWish} latest={data.latest} savingsDelta={savingsDelta} subscriptions={subscriptions} />
+            </aside>
+          </div>
+        ) : null}
 
-            {data.latest ? (
-              <Card>
-                <h2 className="text-xl font-semibold">Последний snapshot</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDate(data.latest.date) ?? data.latest.date}
-                </p>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Доход / расход</p>
-                    <p className="mt-1 font-semibold">
-                      {data.latest.monthly_income} / {data.latest.monthly_expenses}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">Прогресс накоплений</p>
-                    <Progress className="mt-2" tone="primary" value={data.latest.savingsProgress} />
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {data.latest.savings_amount} из {data.latest.target_amount || "—"}
-                    </p>
-                  </div>
-                </div>
-                {data.latest.note ? (
-                  <p className="mt-4 text-sm leading-6 text-muted-foreground">{data.latest.note}</p>
-                ) : null}
-              </Card>
-            ) : (
-              <EmptyState description="Добавьте snapshot накоплений." title="Snapshot не задан">
-                <Link className="text-sm font-semibold text-primary hover:underline" href="#finance-entry">
-                  Добавить snapshot
-                </Link>
-              </EmptyState>
-            )}
-
-            {data.history.length > 1 ? (
-              <Card>
-                <h2 className="text-xl font-semibold">Недавние snapshots</h2>
-                <div className="mt-4 grid gap-3">
-                  {data.history.slice(1, 5).map((entry) => (
-                    <div
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-border bg-surface-muted px-4 py-3 text-sm"
-                      key={entry.date}
-                    >
-                      <span className="font-medium">{formatDate(entry.date) ?? entry.date}</span>
-                      <span className="text-muted-foreground">
-                        {entry.savings_amount} / {entry.target_amount} · {entry.savingsProgress}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
-            <BranchActivitiesSection
-              branch="finance"
-              challenges={data.activities.challenges}
-              goals={data.activities.goals}
-              habits={data.activities.habits}
-              title="Finance-активности"
-            />
-          </>
+        {data && view === "history" ? (
+          <FinanceJournal entries={data.history} financeScore={data.financeScore} />
         ) : null}
       </div>
-
-      <aside className="grid min-w-0 content-start gap-6">
-        <Card id="finance-entry">
-          <h2 className="text-xl font-semibold">Snapshot</h2>
-          <div className="mt-4">
-            {supabase && user ? (
-              <CreateFinanceEntryForm />
-            ) : (
-              <p className="text-sm text-muted-foreground">Войдите, чтобы добавить snapshot.</p>
-            )}
-          </div>
-        </Card>
-
-        <Card variant="muted">
-          <div className="grid gap-2">
-            <Link className="text-sm font-semibold text-primary hover:underline" href="/progress">
-              Смотреть прогресс
-            </Link>
-            <Link className="text-sm font-semibold text-primary hover:underline" href="/goals">
-              Создать финансовую цель
-            </Link>
-          </div>
-        </Card>
-      </aside>
-    </section>
+    </PageContent>
   );
 }

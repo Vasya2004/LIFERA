@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { jsonSafeError, jsonSupabaseError } from "@/lib/api/errors";
-import { jsonError, jsonOk } from "@/lib/api/response";
+import { jsonError, jsonOk, parseJsonBody } from "@/lib/api/response";
 import { jsonPlanLimitError } from "@/lib/api/plan-limit";
 import { createChallengeWithStages } from "@/lib/domain/challenges";
 import { isPlanLimitError } from "@/lib/domain/plan-limit-error";
@@ -32,12 +32,19 @@ export async function POST(request: Request) {
     return jsonError(error ?? "Unauthorized.", error === "Supabase is not configured." ? 503 : 401);
   }
 
-  const body = await request.json();
+  const parsed = await parseJsonBody(request);
+
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = parsed.data as Record<string, unknown>;
   const templateId = body.template_id ? String(body.template_id) : null;
+  const goalId = typeof body.goal_id === "string" && body.goal_id ? body.goal_id : null;
 
   let title = String(body.title ?? "").trim();
-  let description = body.description ?? null;
-  let difficulty = body.difficulty ?? "medium";
+  let description = (body.description ?? null) as string | null;
+  let difficulty = String(body.difficulty ?? "medium") as "easy" | "medium" | "hard";
   let durationDays = Number(body.duration_days ?? 7);
   let isPremium = Boolean(body.is_premium);
 
@@ -55,7 +62,7 @@ export async function POST(request: Request) {
 
     title = title || template.title;
     description = description ?? template.description;
-    difficulty = template.difficulty;
+    difficulty = template.difficulty as "easy" | "medium" | "hard";
     durationDays = Number(template.duration_days ?? 7);
     isPremium = template.is_premium;
   }
@@ -69,7 +76,7 @@ export async function POST(request: Request) {
       description,
       difficulty,
       durationDays,
-      goalId: body.goal_id ?? null,
+      goalId,
       isPremium,
       supabase,
       title,
@@ -85,4 +92,3 @@ export async function POST(request: Request) {
     return jsonSafeError("challenges:POST", createError, 400, "Не удалось создать челлендж.");
   }
 }
-

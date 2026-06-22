@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { PageActionsProvider } from "@/components/layout/page-actions";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
@@ -18,12 +19,14 @@ type AppShellProps = {
 
 export function AppShell({ children, email, profile }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="app-shell-bg min-h-screen text-foreground">
       <div className="md:flex">
         <Sidebar email={email} profile={profile} />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <Topbar profile={profile} />
-          <main className="flex-1 pb-24 md:pb-0">{children}</main>
+          <PageActionsProvider>
+            <Topbar email={email} profile={profile} />
+            <main className="min-w-0 flex-1">{children}</main>
+          </PageActionsProvider>
         </div>
       </div>
       <MobileNav />

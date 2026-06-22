@@ -6,17 +6,20 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useToast } from "@/components/ui/toast-provider";
 import { SKILL_CATEGORIES } from "@/lib/domain/skills";
 import type { Skill } from "@/lib/domain/types";
+import { handleMutationError, showMutationSuccess } from "@/lib/ui/feedback";
 
 type SkillEditFormProps = {
+  onSaved?: () => void;
   skill: Pick<Skill, "category" | "id" | "level" | "progress" | "title">;
 };
 
-export function SkillEditForm({ skill }: SkillEditFormProps) {
+export function SkillEditForm({ onSaved, skill }: SkillEditFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -27,7 +30,6 @@ export function SkillEditForm({ skill }: SkillEditFormProps) {
 
     setLoading(true);
     setError(null);
-    setMessage(null);
 
     const formData = new FormData(event.currentTarget);
 
@@ -46,11 +48,13 @@ export function SkillEditForm({ skill }: SkillEditFormProps) {
     setLoading(false);
 
     if (!response.ok) {
+      handleMutationError(toast, payload, "Не удалось сохранить навык.");
       setError(payload?.error ?? "Не удалось сохранить навык.");
       return;
     }
 
-    setMessage("Навык обновлён.");
+    showMutationSuccess(toast, "Изменения сохранены");
+    onSaved?.();
     router.refresh();
   }
 
@@ -65,16 +69,10 @@ export function SkillEditForm({ skill }: SkillEditFormProps) {
         ))}
       </Select>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          defaultValue={skill.level}
-          label="Уровень"
-          min={1}
-          name="level"
-          type="number"
-        />
+        <Input defaultValue={skill.level} label="Уровень" min={1} name="level" type="number" />
         <Input
           defaultValue={skill.progress}
-          label="Progress, %"
+          label="Прогресс, %"
           max={100}
           min={0}
           name="progress"
@@ -86,10 +84,9 @@ export function SkillEditForm({ skill }: SkillEditFormProps) {
           {error}
         </p>
       ) : null}
-      <Button loading={loading} size="sm" type="submit" variant="secondary">
+      <Button loading={loading} loadingLabel="Сохраняем..." size="sm" type="submit" variant="secondary">
         Сохранить
       </Button>
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
     </form>
   );
 }

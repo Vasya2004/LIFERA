@@ -1,27 +1,28 @@
-import { PageHeader } from "@/components/layout/page-header";
-import { ModulePreview } from "@/components/layout/module-preview";
+import Link from "next/link";
 
-const plannedItems = [
-  "Помощь с формулировкой цели.",
-  "Декомпозиция цели на задачи.",
-  "Предложение привычек под цель или сферу жизни.",
-  "Backend-only вызовы AI API в будущем.",
-];
+import { PageContent } from "@/components/layout/page-content";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default function AiCoachPage() {
   return (
     <>
       <PageHeader
-        title="AI Ассистент"
-        description="Legacy route: в UI используется название “AI Ассистент”."
+        description="Этот маршрут сохранён для совместимости. Основной экран — Ассистент Lifera."
+        title="Ассистент Lifera"
       />
-      <ModulePreview
-        description="AI Ассистент предлагает один практический следующий шаг через будущие backend-only AI calls."
-        items={plannedItems}
-        metric="1 следующий шаг"
-        progress={38}
-        title="Каркас AI Ассистента"
-      />
+      <PageContent>
+        <Card>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Рекомендации по целям, привычкам и прогрессу доступны на основном экране
+            ассистента. Там используется честный рекомендательный режим без имитации чата с LLM.
+          </p>
+          <Link className="mt-5 inline-flex" href="/ai-assistant">
+            <Button variant="secondary">Открыть ассистента</Button>
+          </Link>
+        </Card>
+      </PageContent>
     </>
   );
 }

@@ -12,7 +12,12 @@ type PublicShellRouterProps = {
 export function PublicShellRouter({ children }: PublicShellRouterProps) {
   const pathname = usePathname();
 
-  if (pathname === "/pricing" || pathname === "/login" || pathname === "/register") {
+  if (
+    pathname === "/pricing" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/onboarding"
+  ) {
     return <div className="min-h-screen overflow-x-hidden">{children}</div>;
   }
 

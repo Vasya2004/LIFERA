@@ -6,6 +6,7 @@ const protectedRoutes = [
   "/goals",
   "/challenges",
   "/habits",
+  "/wishes",
   "/progress",
   "/skills",
   "/health",

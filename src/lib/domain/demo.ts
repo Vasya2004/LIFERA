@@ -46,7 +46,7 @@ export const demoChallenges = [
 
 export const demoAchievements = [
   {
-    description: "Завершить первый этап челленджа.",
+    description: "Завершить первый этап плана цели.",
     id: "a1",
     is_premium: false,
     status: "unlocked",
@@ -70,4 +70,3 @@ export const demoAchievements = [
     xp_reward: 200,
   },
 ];
-

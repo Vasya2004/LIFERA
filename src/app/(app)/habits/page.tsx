@@ -1,158 +1,93 @@
-import Link from "next/link";
-
-import { PageTitle } from "@/components/layout/page-title";
-import { CreateHabitForm } from "@/components/data/create-habit-form";
-import { HabitCard } from "@/components/data/habit-card";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import { HabitsCreateAction } from "@/components/habits/habits-create-action";
+import { HabitsMissionsView } from "@/components/habits/habits-missions-view";
+import { HabitsRhythmView } from "@/components/habits/habits-rhythm-view";
+import { HabitsSidePanel } from "@/components/habits/habits-side-panel";
+import { HabitsTodayView } from "@/components/habits/habits-today-view";
+import { PageContent } from "@/components/layout/page-content";
 import { getCurrentUser } from "@/lib/auth/session";
-import type { Habit } from "@/lib/domain/types";
+import { getHabitsPageData } from "@/lib/domain/habits-page";
 
-function weekStartDate() {
-  const date = new Date();
-  const day = date.getDay() || 7;
-  date.setDate(date.getDate() - day + 1);
-  return date.toISOString().slice(0, 10);
-}
+type HabitsView = "today" | "missions";
 
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
-}
+const VALID_VIEWS = new Set<string>(["today", "missions"]);
 
-export default async function HabitsPage() {
+const VIEW_ALIASES: Record<string, HabitsView> = {
+  all: "missions",
+  archive: "missions",
+  rhythm: "today",
+};
+
+type HabitsPageProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+export default async function HabitsPage({ searchParams }: HabitsPageProps) {
+  const params = await searchParams;
+  const rawView = params.view ?? "";
+  const view: HabitsView = VALID_VIEWS.has(rawView)
+    ? (rawView as HabitsView)
+    : (VIEW_ALIASES[rawView] ?? "today");
+
   const { supabase, user } = await getCurrentUser();
-  const weekStart = weekStartDate();
-  const today = todayIsoDate();
+  let data: Awaited<ReturnType<typeof getHabitsPageData>> | null = null;
+  let loadError: string | null = null;
 
-  const [
-    habitsResult,
-    goalsResult,
-    skillsResult,
-    challengesResult,
-    logsResult,
-  ] =
-    supabase && user
-      ? await Promise.all([
-          supabase
-            .from("habits")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-          supabase.from("goals").select("id,title").eq("user_id", user.id),
-          supabase.from("skills").select("id,title").eq("user_id", user.id),
-          supabase.from("challenges").select("id,title").eq("user_id", user.id),
-          supabase
-            .from("habit_logs")
-            .select("habit_id,completed_on")
-            .eq("user_id", user.id)
-            .gte("completed_on", weekStart),
-        ])
-      : [
-          { data: [], error: null },
-          { data: [], error: null },
-          { data: [], error: null },
-          { data: [], error: null },
-          { data: [], error: null },
-        ];
-
-  const allHabits = (habitsResult.data ?? []) as Habit[];
-  const activeHabits = allHabits.filter((habit) => habit.status === "active");
-  const archivedHabits = allHabits.filter((habit) => habit.status === "archived");
-  const goals = goalsResult.data ?? [];
-  const skills = skillsResult.data ?? [];
-  const challenges = challengesResult.data ?? [];
-  const logs = logsResult.data ?? [];
-  const pageError =
-    habitsResult.error?.message ??
-    goalsResult.error?.message ??
-    skillsResult.error?.message ??
-    challengesResult.error?.message ??
-    logsResult.error?.message ??
-    null;
-
-  function linkedTitle(items: Array<{ id: string; title: string }>, id: string | null) {
-    return items.find((item) => item.id === id)?.title ?? null;
-  }
-
-  function weeklyCompletions(habitId: string) {
-    return logs.filter((log) => log.habit_id === habitId).length;
-  }
-
-  function completedToday(habitId: string) {
-    return logs.some((log) => log.habit_id === habitId && log.completed_on === today);
+  if (supabase && user) {
+    try {
+      data = await getHabitsPageData(supabase, user.id);
+    } catch (error) {
+      loadError =
+        error instanceof Error ? error.message : "Не удалось загрузить привычки.";
+    }
   }
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid content-start gap-6">
-        <PageTitle subtitle="Ритуалы прокачки." title="Привычки" />
+    <PageContent aria-label="Привычки">
+      <HabitsCreateAction skills={data?.skills ?? []} />
 
-        {pageError ? (
-          <Card className="border-danger/25 bg-danger-subtle">
-            <h2 className="text-lg font-semibold text-danger-foreground">
-              Модуль привычек требует миграцию базы
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-danger-foreground">
-              Примените `supabase/migrations/0002_habits_foundation.sql` и
-              `0003_habit_achievements.sql`, затем обновите страницу.
-            </p>
-          </Card>
+      <div
+        aria-label={`Активный раздел привычек: ${view}`}
+        className="grid min-w-0 gap-5 xl:gap-6"
+        role="tabpanel"
+      >
+        {loadError ? (
+          <div className="rounded-xl border border-danger/25 bg-danger-subtle p-4 text-sm text-danger-foreground">
+            {loadError}
+          </div>
         ) : null}
 
-        {!supabase || !user ? (
-          <Card variant="muted">
-            <p className="text-sm text-muted-foreground">
-              Войдите в аккаунт, чтобы управлять ритуалами прокачки.
+        {!data && !loadError ? (
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center dark:border-white/5 dark:bg-zinc-900/70">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Войдите, чтобы управлять привычками.
             </p>
-          </Card>
+          </div>
         ) : null}
 
-        {activeHabits.length > 0 ? (
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold">Активные ритуалы</h2>
-            {activeHabits.map((habit) => (
-              <HabitCard
-                challengeTitle={linkedTitle(challenges, habit.linked_challenge_id)}
-                completedToday={completedToday(habit.id)}
-                goalTitle={linkedTitle(goals, habit.linked_goal_id)}
-                habit={habit}
-                key={habit.id}
-                skillTitle={linkedTitle(skills, habit.linked_skill_id)}
-                weekCompletions={weeklyCompletions(habit.id)}
+        {data ? (
+          <>
+            {view === "today" ? (
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="grid min-w-0 content-start gap-5 xl:gap-6">
+                  <HabitsTodayView checklist={data.checklist} summary={data.todaySummary} />
+                  <HabitsRhythmView items={data.weeklyRhythm} summary={data.todaySummary} />
+                </div>
+                <aside className="min-w-0 self-start">
+                  <HabitsSidePanel summary={data.todaySummary} />
+                </aside>
+              </div>
+            ) : null}
+
+            {view === "missions" ? (
+              <HabitsMissionsView
+                archivedHabits={data.archivedHabits}
+                checklist={data.checklist}
+                goals={data.goals}
               />
-            ))}
-          </div>
-        ) : pageError ? null : (
-          <EmptyState description="Создайте первый ритуал." title="Пока нет активных ритуалов">
-            <Link className="text-sm font-semibold text-primary hover:underline" href="#create-habit">
-              Создать первую привычку
-            </Link>
-          </EmptyState>
-        )}
-
-        {archivedHabits.length > 0 ? (
-          <div className="grid gap-4">
-            <h2 className="text-xl font-semibold">Архив</h2>
-            {archivedHabits.map((habit) => (
-              <Card key={habit.id} variant="muted">
-                <p className="font-semibold text-foreground">{habit.title}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Лучшая серия: {habit.streak_best} · XP за выполнение: {habit.xp_reward}
-                </p>
-              </Card>
-            ))}
-          </div>
+            ) : null}
+          </>
         ) : null}
       </div>
-
-      <aside className="grid content-start gap-6">
-        <Card id="create-habit">
-          <h2 className="text-xl font-semibold">Новый ритуал</h2>
-          <div className="mt-4">
-            <CreateHabitForm challenges={challenges} goals={goals} skills={skills} />
-          </div>
-        </Card>
-      </aside>
-    </section>
+    </PageContent>
   );
 }

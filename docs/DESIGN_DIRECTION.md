@@ -1,6 +1,6 @@
 # Design Direction
 
-> **Stage 1 (2026):** финальная навигация включает **Привычки** как top-level пункт (`/habits`) — ритуалы прокачки сфер жизни, не generic habit tracker. Устаревшие ограничения Core Navigation v0.2 ниже не отменяют Stage 1 IA; см. `APP_STRUCTURE.md` и `PRODUCT_FLOW.md`.: Lifera
+> **Stage 1 IA lock (2026):** пользовательская IA включает Главную, Цели, Миссии, Навыки, Здоровье, Финансы, Достижения, Ассистента, План, Профиль и Настройки. Карта желаний находится внутри целей (`/goals/wishes`). `/progress` hidden legacy, `/challenges` internal technical layer. См. `APP_STRUCTURE.md` и `PRODUCT_FLOW.md`.
 
 ## 1. Название направления
 
@@ -12,7 +12,7 @@ Warm Graphite Personal Command Center
 
 ## 2. Краткое описание
 
-Lifera должен выглядеть как серьезная персональная операционная система для управления целями, действиями, проектами, календарем, прогрессом, достижениями и AI-рекомендациями.
+Lifera должен выглядеть как серьезная персональная операционная система для управления целями, миссиями, сферами жизни, прогрессом, достижениями и AI-рекомендациями.
 
 Lifera не должен выглядеть как игра. Геймификация должна быть встроена как слой данных, который помогает видеть развитие, регулярность и накопительный прогресс, а не как игровой визуальный стиль.
 
@@ -38,7 +38,7 @@ Minimal Premium Life Performance OS / Warm Graphite Personal Command Center.
 - Чистота: экраны должны быть понятными с первого взгляда, с ясной иерархией, аккуратной типографикой и предсказуемыми состояниями.
 - Много воздуха: Lifera работает с личными целями и прогрессом, поэтому интерфейс не должен давить плотностью или перегружать пользователя.
 - Понятная структура: каждый экран должен быстро отвечать на вопросы "где я", "что важно сейчас" и "какое действие следующее".
-- Сильная визуализация прогресса: прогресс по целям, привычкам, XP, уровням и сферам жизни должен быть видимым, но не агрессивным.
+- Сильная визуализация прогресса: прогресс по целям, миссиям, XP, уровням и сферам жизни должен быть видимым, но не агрессивным.
 - Взрослая геймификация: достижения, streak и уровни должны выглядеть как система персонального роста, а не как детская игра.
 - Технологичность без киберпанка: AI и данные должны ощущаться современно, но без перегруза neon-эффектами, сетками, хаотичным glow и sci-fi клише.
 - Пригодность для ежедневного использования: интерфейс должен оставаться спокойным, удобным и не утомлять при регулярной работе.
@@ -132,7 +132,7 @@ Topbar должен помогать пользователю понимать �
 
 ### Dashboard cards
 
-Dashboard должен ощущаться как персональный command center, а не как стена одинаковых карточек. Главная страница использует dominant Hero / Focus Block, краткую сводку XP / Level / Streak, рабочие блоки действий, привычек и целей, AI Ассистент recommendation и поддерживающие widgets достижений, календаря, проектов, навыков, финансов и здоровья.
+Dashboard должен ощущаться как персональный command center, а не как стена одинаковых карточек. Главная страница использует dominant Hero / Focus Block, краткую сводку XP / Level / Streak, рабочие блоки целей и миссий, рекомендацию Ассистента и поддерживающие widgets достижений и прогресса.
 
 Карточки dashboard должны быть плотными по смыслу, но визуально спокойными. Каждая карточка должна иметь понятную роль в иерархии: главный фокус, ключевая метрика, рабочий список, рекомендация или supporting widget.
 
@@ -140,17 +140,24 @@ Dashboard должен отвечать за 5 секунд: что сегодн
 
 Не делать 12 одинаковых dashboard cards, случайные графики, crypto-dashboard, game dashboard, перегруженный analytics screen, medical cockpit или finance terminal.
 
+### Branch dashboards (Skills / Health / Finance)
+
+Ветки — compact branch dashboards внутри Lifera OS, не отдельные продукты.
+
+- Общая структура: hero → branch blocks → связанные действия → следующий шаг; create panel в sidebar.
+- Skills: neutral/orange accent, level/progress metrics, modal settings, без fake skill tree.
+- Health: muted wellness rhythm, compact disclaimer, без medical cockpit.
+- Finance: large ₽ metrics, progress to target, без banking terminal imitation.
+
+Не давать медицинских или финансовых обещаний. Не показывать raw keys и EN labels (`Wellness score`, `Target`, `Stability score`).
+
 ### Goal cards
 
 Goal cards должны показывать название цели, сферу жизни, статус, прогресс и ближайшее действие. Визуальный акцент - на движении к результату, а не на декоративности.
 
-### Task cards
+### Mission cards
 
-Task cards должны быть простыми, быстрыми для сканирования и удобными для отметки выполнения. Приоритет, связь с целью и статус должны читаться без лишнего текста.
-
-### Habit chips
-
-Habit chips должны помогать быстро видеть регулярность и streak. Они могут быть компактными, с ясными состояниями: planned, done, missed, paused.
+Mission cards должны быть простыми, быстрыми для сканирования и удобными для отметки выполнения. Регулярность, streak, XP и статус должны читаться без лишнего текста.
 
 ### Progress bars
 
@@ -166,7 +173,7 @@ AI Ассистент cards должны выглядеть как умные р
 
 ### Status badges
 
-Status badges должны быть небольшими, читаемыми и системными. Они используются для статусов задач, целей, привычек, AI-рекомендаций и onboarding.
+Status badges должны быть небольшими, читаемыми и системными. Они используются для статусов миссий, целей, AI-рекомендаций и onboarding.
 
 ### Primary/secondary buttons
 
@@ -184,24 +191,21 @@ Empty states должны помогать сделать следующий ш�
 - topbar для текущего контекста;
 - mobile navigation для мобильных экранов.
 
-Основные разделы Core Navigation v0.2:
+Основные разделы Stage 1:
 
 - Главная;
-- Действия;
-- Проекты;
-- Календарь;
 - Цели;
-- Достижения;
+- Миссии;
 - Навыки;
-- Финансы;
 - Здоровье;
-- AI Ассистент;
-- Настройки;
-- Профиль.
+- Финансы;
+- Достижения;
+- Ассистент;
+- План;
+- Профиль;
+- Настройки.
 
-Задачи и Привычки не являются отдельными top-level пунктами. Они находятся внутри раздела Действия. Желания находятся внутри раздела Цели. Старое UI-название AI Coach не используется; в интерфейсе использовать "AI Ассистент".
-
-Не добавлять как top-level пункты Core Navigation v0.2: Аналитика, Рефлексия, Сферы жизни, Магазин, Хранилище, Желания, Задачи, Привычки, AI Coach.
+Карта желаний не является пунктом sidebar: она живёт внутри целей. `/progress` не является пунктом sidebar: прогресс встроен в контекстные страницы и hidden legacy route. `/challenges` не является пользовательским разделом: это internal technical layer. Старое UI-название AI Coach не использовать; в интерфейсе использовать "Ассистент".
 
 ## 12. Auth и onboarding стиль
 
@@ -236,8 +240,25 @@ Empty states должны помогать сделать следующий ш�
 - Не добавлять визуальные паттерны, которые противоречат Adult Gamified Personal OS.
 - Сначала проверять основной пользовательский путь, затем усиливать визуальную выразительность.
 
-## 14. Текущий статус
+## 14. Терминология интерфейса (Stage Q1)
 
-DESIGN_DIRECTION v0.1
+- **Цели** и **миссии** — основные сущности ядра.
+- **Опыт** и **уровень** — продуктовые термины геймификации (не «XP» / «Level» в UI).
+- **Индекс жизни** — сводный показатель экосистемы (не «Life Score»).
+- **Достижения** — milestones без англоязычного «Milestone» в UI.
+- **Ассистент Lifera** — честный рекомендательный режим; не называть LLM там, где его нет.
+- Планы: **Free / Pro / Ultra**; расширенный доступ вместо «Premium» в пользовательских текстах.
 
-Это не финальная дизайн-система, а минимально зафиксированное направление, достаточное для продолжения разработки Lifera Core MVP.
+Glossary: `src/lib/domain/labels.ts`.
+
+**Stage 1 (2026):** premium dark command center — layered graphite surfaces, orange accent for focus/progress only, compact app shell, nav «Миссии» at technical route `/habits`.
+
+**Stage 8 (2026):** microinteractions & premium feel — unified toast feedback layer (`ToastProvider`), subtle motion utilities (`motion-lift`, toast slide/fade), loading labels on primary actions, XP/achievement feedback только из API. Toast: dark graphite, orange progress accent, muted red errors, positioned above mobile bottom nav. No confetti, bounce, or RPG motion.
+
+**Stage 9 (2026):** mobile experience pass — centralized `--mobile-page-padding-bottom`, safe-area bottom nav, compact topbar, collapsible challenge detail sidebar on mobile, sheet-style edit modals, `.touch-target` for action menus, horizontal scroll guard (`overflow-x: clip`, `min-w-0`). QA: `node scripts/mobile-qa.mjs` across 375–430px.
+
+## 15. Текущий статус
+
+DESIGN_DIRECTION — актуализирован после Product Quality Pass (Stage Q1 cleanup).
+
+Это не финальная дизайн-система, а зафиксированное направление для разработки Lifera.

@@ -1,26 +1,41 @@
-import { PageTitle } from "@/components/layout/page-title";
-import { AIRecommendationCard } from "@/components/ui/ai-recommendation-card";
+import { AssistantChat } from "@/components/assistant/assistant-chat";
+import { PageContent } from "@/components/layout/page-content";
+import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { buildRuleBasedRecommendation } from "@/lib/domain/ai";
+import { getAssistantPageData } from "@/lib/domain/assistant-page";
 
 export default async function AiAssistantPage() {
   const { supabase, user } = await getCurrentUser();
-  const recommendation =
-    supabase && user
-      ? await buildRuleBasedRecommendation(supabase, user.id).catch(() => null)
-      : null;
+  let data: Awaited<ReturnType<typeof getAssistantPageData>> | null = null;
+  let loadError: string | null = null;
 
-  return (
-    <section className="mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:px-8">
-      <PageTitle subtitle="Следующий шаг по вашим данным." title="AI Ассистент" />
-      <AIRecommendationCard
-        content={
-          recommendation?.content ??
-          "Создайте цель и челлендж, чтобы рекомендации стали персональными."
-        }
-        title={recommendation?.title ?? "Начните с данных"}
-      />
-    </section>
-  );
+  if (supabase && user) {
+    try {
+      data = await getAssistantPageData(supabase, user.id);
+    } catch (error) {
+      loadError = error instanceof Error ? error.message : "Не удалось загрузить данные ассистента.";
+    }
+  }
+
+  if (loadError) {
+    return (
+      <PageContent className="flex min-h-[calc(100vh-var(--topbar-height))] items-center justify-center">
+        <Card className="border-danger/25 bg-danger-subtle">
+          <p className="text-sm text-danger-foreground">{loadError}</p>
+        </Card>
+      </PageContent>
+    );
+  }
+
+  if (!supabase || !user || !data) {
+    return (
+      <PageContent className="flex min-h-[calc(100vh-var(--topbar-height))] items-center justify-center">
+        <Card variant="muted">
+          <p className="text-sm text-muted-foreground">Войдите, чтобы использовать ассистента.</p>
+        </Card>
+      </PageContent>
+    );
+  }
+
+  return <AssistantChat data={data} />;
 }
-

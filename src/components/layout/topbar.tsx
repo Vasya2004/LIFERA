@@ -1,12 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { Bell } from "lucide-react";
 
+import { DashboardExportButton } from "@/components/dashboard/dashboard-export-button";
+import { usePageActions } from "@/components/layout/page-actions";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { TopSectionTabs } from "@/components/layout/top-section-tabs";
+import { UserMenu } from "@/components/layout/user-menu";
 import { navigationItems } from "@/config/navigation";
+import { getSectionTabs } from "@/config/section-tabs";
 
 type TopbarProps = {
+  email: string | null;
   profile: {
     fullName: string | null;
     level: number;
@@ -16,43 +22,62 @@ type TopbarProps = {
   } | null;
 };
 
-export function Topbar({ profile }: TopbarProps) {
+const advancedSectionLabels: Record<string, string> = {
+  "/challenges": "План цели",
+  "/skills": "Навыки",
+};
+
+export function Topbar({ email, profile }: TopbarProps) {
   const pathname = usePathname();
   const currentSection = navigationItems.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   );
+  const advancedSectionEntry = Object.entries(advancedSectionLabels).find(
+    ([href]) => pathname === href || pathname.startsWith(`${href}/`),
+  );
+  const advancedSectionLabel = advancedSectionEntry?.[1];
+  const sectionLabel = currentSection?.label ?? advancedSectionLabel ?? "Lifera";
+  const isDashboard = pathname === "/dashboard";
+  const pageActions = usePageActions();
+  const hasSectionTabs = getSectionTabs(pathname).length > 0;
+  const actions = pageActions ?? (isDashboard ? <DashboardExportButton /> : null);
 
   return (
-    <header className="sticky top-0 z-20 min-h-[var(--topbar-height)] border-b border-border bg-surface/90 px-5 py-4 backdrop-blur sm:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-muted-foreground">
-            Фокус, прогресс и ближайшие действия
-          </p>
-          <p className="mt-1 truncate text-lg font-semibold tracking-tight text-foreground">
-            {currentSection?.label ?? "Workspace"}
-          </p>
+    <>
+      <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-xl">
+        <div className="flex w-full min-w-0 items-center justify-between gap-3 px-[var(--app-content-gutter)] py-3">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              {sectionLabel}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle initialTheme={profile?.preferredTheme ?? "system"} />
+            <button
+              aria-disabled="true"
+              aria-label="Уведомления скоро"
+              className="hidden h-[54px] w-[54px] items-center justify-center rounded-full border border-border bg-surface-muted/70 text-muted-foreground shadow-[var(--shadow-sm)] backdrop-blur-xl transition-colors hover:border-border-strong hover:bg-surface hover:text-foreground sm:inline-flex"
+              title="Уведомления появятся позже"
+              type="button"
+            >
+              <Bell aria-hidden="true" size={18} strokeWidth={2.15} />
+            </button>
+            <UserMenu email={email} fullName={profile?.fullName ?? null} />
+          </div>
         </div>
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
-          <p
-            aria-disabled="true"
-            className="hidden h-10 min-w-0 max-w-sm flex-1 items-center rounded-[var(--radius-control)] border border-border bg-surface-muted px-4 text-sm text-muted-foreground lg:inline-flex"
-            title="Поиск появится в следующих версиях"
-          >
-            Поиск скоро
-          </p>
-          <span className="hidden shrink-0 rounded-full border border-border bg-surface-muted px-3 py-1 text-xs font-medium text-muted-foreground sm:inline-flex">
-            Level {profile?.level ?? 1} · {profile?.xpTotal ?? 0} XP
-          </span>
-          <ThemeToggle initialTheme={profile?.preferredTheme ?? "system"} />
-          <Link
-            className="inline-flex h-[var(--button-height-sm)] shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-transparent bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-sm)] transition-colors hover:bg-[var(--primary-hover)]"
-            href="/goals"
-          >
-            Создать
-          </Link>
+      </header>
+      {hasSectionTabs || actions ? (
+        <div className="app-page pt-6">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <TopSectionTabs />
+            {actions ? (
+              <div className="flex min-w-0 shrink-0">
+                {actions}
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </header>
+      ) : null}
+    </>
   );
 }

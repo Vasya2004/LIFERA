@@ -1,21 +1,34 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-
-import { SupabaseReadinessBanner } from "@/components/layout/supabase-readiness-banner";
-import { DashboardHabitsBlock } from "@/components/data/dashboard-habits-block";
-import { AchievementCard } from "@/components/ui/achievement-card";
-import { AIRecommendationCard } from "@/components/ui/ai-recommendation-card";
-import { ChallengeCard } from "@/components/ui/challenge-card";
-import { GoalCard } from "@/components/ui/goal-card";
-import { ProgressCard } from "@/components/ui/progress-card";
-import { StatCard } from "@/components/ui/stat-card";
-import { Button } from "@/components/ui/button";
+import { DashboardAchievements } from "@/components/dashboard/dashboard-achievements";
+import { DashboardFocusView } from "@/components/dashboard/dashboard-focus-view";
+import { DashboardFinance } from "@/components/dashboard/dashboard-finance";
+import { DashboardHealth } from "@/components/dashboard/dashboard-health";
+import { DashboardMainGoal } from "@/components/dashboard/dashboard-main-goal";
+import { DashboardMainWish } from "@/components/dashboard/dashboard-main-wish";
+import { DashboardMissionsToday } from "@/components/dashboard/dashboard-missions-today";
+import { DashboardProgressView } from "@/components/dashboard/dashboard-progress-view";
+import { DashboardRecommendationV2 } from "@/components/dashboard/dashboard-recommendation-v2";
+import { DashboardUserLevel } from "@/components/dashboard/dashboard-user-level";
+import { PageContent } from "@/components/layout/page-content";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/domain/dashboard";
+import type { DashboardAchievementSummary } from "@/lib/domain/dashboard";
 
-export default async function DashboardPage() {
+type DashboardView = "overview" | "focus" | "progress";
+
+type DashboardPageProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+export const dynamic = "force-dynamic";
+
+function parseDashboardView(view: string | undefined): DashboardView {
+  return view === "focus" || view === "progress" || view === "overview" ? view : "overview";
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
+  const currentView = parseDashboardView(params.view);
   const { supabase, user } = await getCurrentUser();
   let data = null;
   let loadError: string | null = null;
@@ -25,229 +38,135 @@ export default async function DashboardPage() {
       data = await getDashboardData(supabase, user.id);
     } catch (error) {
       loadError =
-        error instanceof Error ? error.message : "Не удалось загрузить данные dashboard.";
+        error instanceof Error ? error.message : "Не удалось загрузить данные главной.";
     }
   }
 
   const profile = data?.profile;
-  const activeGoals = data?.activeGoals ?? [];
-  const activeChallenges = data?.activeChallenges ?? [];
-  const activeHabits = data?.activeHabits ?? [];
-  const habitLogsToday = data?.habitLogsToday ?? [];
-  const primaryGoal = data?.primaryGoal ?? activeGoals[0] ?? null;
-  const primaryChallenge = data?.primaryChallenge ?? activeChallenges[0] ?? null;
-  const nextStage = data?.nextStage ?? null;
-  const achievements = data?.achievements ?? [];
-  const recentAchievements = data?.recentUnlockedAchievements ?? [];
-  const recommendation = data?.aiRecommendation ?? {
-    content:
-      "Завершите onboarding или создайте первую цель и челлендж, чтобы Lifera начала считать XP и рекомендации.",
-    title: "Запустите свою Life RPG-систему",
-  };
-
-  const displayName =
-    profile?.full_name?.trim() ||
-    user?.email?.split("@")[0] ||
-    "Пользователь Lifera";
-  const lifeScore = Number(profile?.life_score ?? 0);
   const level = Number(profile?.level ?? 1);
   const xpTotal = Number(profile?.xp_total ?? 0);
-  const xpProgress = Math.min(100, Math.round((xpTotal % 500) / 5));
-  const planLabel = String(profile?.plan ?? "free").toUpperCase();
-  const hasStarterSystem = Boolean(primaryGoal && primaryChallenge);
-  const unlockedAchievements = achievements.filter((item) => item.status === "unlocked").length;
-  const goalLinkedChallenges = primaryGoal
-    ? activeChallenges.filter((challenge) => challenge.goal_id === primaryGoal.id)
-    : [];
-  const goalLinkedChallenge =
-    goalLinkedChallenges.find((challenge) => challenge.status === "active") ??
-    goalLinkedChallenges[0] ??
-    null;
-  const completedTodayHabitIds = new Set(habitLogsToday.map((log) => log.habit_id));
+  const xpToNextLevel = Number(profile?.xpToNextLevel ?? 500);
+  const levelProgress = Number(profile?.levelProgress ?? 0);
+  const fallbackAchievementsSummary: DashboardAchievementSummary = {
+    nextTitle: null,
+    progress: 0,
+    total: 0,
+    unlocked: 0,
+  };
+  const achievementsSummary = data?.achievementsSummary ?? fallbackAchievementsSummary;
+  const achievementsTotal = achievementsSummary.total;
+  const unlockedAchievements = achievementsSummary.unlocked;
+
+  const streak = data?.streak ?? 0;
+
+  const completedTodayIds = new Set(data?.habitLogsToday?.map((log: { habit_id: string }) => log.habit_id) ?? []);
+  const liferaRecommendation = data?.liferaRecommendation ?? {
+    action: { href: "/goals", label: "Создать цель", reason: "missing_goal" },
+    content: "Начните с одной главной цели, чтобы Lifera собрала вокруг нее привычки и фокус.",
+    title: "Создайте главную цель",
+  };
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:px-8 2xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="grid gap-6">
-        <SupabaseReadinessBanner />
-
-        {loadError ? (
-          <Card className="border-danger/25 bg-danger-subtle">
-            <p className="text-sm text-danger-foreground">{loadError}</p>
-          </Card>
-        ) : null}
-
-        <Card variant="highlight">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {displayName}, {hasStarterSystem ? "продолжайте челлендж" : "настройте систему"}
-          </h1>
-          {primaryChallenge ? (
-            <div className="mt-6">
-              <Link href={`/challenges/${primaryChallenge.id}`}>
-                <Button className="gap-2" size="lg">
-                  Продолжить челлендж
-                  <ArrowRight size={18} />
-                </Button>
-              </Link>
-            </div>
-          ) : null}
+    <PageContent
+      aria-label={
+        currentView === "focus"
+          ? "Фокус главной страницы"
+          : currentView === "progress"
+          ? "Прогресс главной страницы"
+          : "Обзор главной страницы"
+      }
+      className="grid-cols-12 pb-[var(--mobile-page-padding-bottom)] md:pb-8 xl:pb-10"
+      role="tabpanel"
+    >
+      {loadError ? (
+        <Card className="col-span-12 border-danger/25 bg-danger-subtle">
+          <p className="text-sm text-danger-foreground">{loadError}</p>
         </Card>
+      ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard detail="Life Score" label="Состояние" progress={lifeScore} value={`${lifeScore}`} />
-          <StatCard
-            detail={`${profile?.xpToNextLevel ?? 0} XP до следующего уровня`}
-            label="Level"
-            progress={xpProgress}
-            value={`${level}`}
-          />
-          <StatCard detail="Всего опыта" label="XP" value={`${xpTotal}`} />
-          <StatCard detail="Текущий план" label="План" value={planLabel} />
-        </div>
-
-        {!hasStarterSystem ? (
-          <EmptyState
-            description="Завершите onboarding или создайте первую цель."
-            title="Стартовая система не собрана"
-          >
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/onboarding">
-                <Button>Пройти onboarding</Button>
-              </Link>
-              <Link href="/goals">
-                <Button variant="secondary">Создать цель</Button>
-              </Link>
-            </div>
-          </EmptyState>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <section className="grid gap-4">
-              <h2 className="text-xl font-semibold">Активная цель</h2>
-              {primaryGoal ? (
-                <GoalCard
-                  lifeArea={primaryGoal.life_area}
-                  linkedChallengeHref={
-                    goalLinkedChallenge ? `/challenges/${goalLinkedChallenge.id}` : null
-                  }
-                  linkedChallengeTitle={goalLinkedChallenge?.title ?? null}
-                  linkedChallengesCount={goalLinkedChallenges.length}
-                  progress={Number(primaryGoal.progress)}
-                  status={primaryGoal.status}
-                  title={primaryGoal.title}
-                />
-              ) : (
-                <EmptyState description="Создайте цель для связи с челленджами." title="Нет активных целей">
-                  <Link href="/goals">
-                    <Button>Создать цель</Button>
-                  </Link>
-                </EmptyState>
-              )}
-            </section>
-
-            <section className="grid gap-4">
-              <h2 className="text-xl font-semibold">Активный челлендж</h2>
-              {primaryChallenge ? (
-                <ChallengeCard
-                  difficulty={primaryChallenge.difficulty}
-                  durationDays={primaryChallenge.duration_days}
-                  goalTitle={primaryGoal?.title ?? null}
-                  href={`/challenges/${primaryChallenge.id}`}
-                  isPremium={primaryChallenge.is_premium}
-                  nextStepTitle={nextStage?.title ?? null}
-                  progress={Number(primaryChallenge.progress)}
-                  status={primaryChallenge.status}
-                  title={primaryChallenge.title}
-                  xpRewardTotal={primaryChallenge.xp_reward_total}
-                />
-              ) : (
-                <EmptyState description="Создайте челлендж от цели." title="Нет активных челленджей">
-                  <Link href="/challenges">
-                    <Button>Создать челлендж</Button>
-                  </Link>
-                </EmptyState>
-              )}
-            </section>
+      {currentView === "overview" ? (
+        <>
+          <div className="col-span-12 xl:col-span-6">
+            <DashboardMainGoal
+              goal={data?.primaryGoal ?? null}
+              missionsCount={data?.linkedPrimaryGoalHabits.length ?? 0}
+              wish={data?.mainWish ?? null}
+            />
           </div>
-        )}
+          <div className="col-span-12 md:col-span-6 xl:col-span-3">
+            <DashboardUserLevel
+              level={level}
+              levelProgress={levelProgress}
+              streak={streak}
+              xpToNextLevel={xpToNextLevel}
+              xpTotal={xpTotal}
+            />
+          </div>
+          <div className="col-span-12 md:col-span-6 xl:col-span-3">
+            <DashboardMainWish
+              goal={data?.primaryGoal ?? null}
+              wish={data?.mainWish ?? null}
+            />
+          </div>
 
-        {(activeGoals.length > 1 || activeChallenges.length > 1) && (
-          <Card variant="muted">
-            <p className="text-sm text-muted-foreground">
-              Целей: {activeGoals.length} · челленджей: {activeChallenges.length}
-            </p>
-          </Card>
-        )}
-      </div>
+          <div className="col-span-12 lg:col-span-4">
+            <DashboardMissionsToday
+              completedTodayIds={completedTodayIds}
+              habits={data?.todayHabits ?? []}
+            />
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <DashboardFinance summary={data?.financeSummary ?? { state: "empty" }} />
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <DashboardHealth summary={data?.healthSummary ?? { state: "empty" }} />
+          </div>
 
-      <aside className="grid content-start gap-6">
-        <AIRecommendationCard
-          content={recommendation.content}
-          title={recommendation.title}
+          <div className="col-span-12 xl:col-span-6">
+            <DashboardAchievements
+              summary={achievementsSummary}
+              total={achievementsTotal}
+              unlocked={unlockedAchievements}
+            />
+          </div>
+          <div className="col-span-12 xl:col-span-6">
+            <DashboardRecommendationV2
+              action={liferaRecommendation.action}
+              content={liferaRecommendation.content}
+              title={liferaRecommendation.title}
+              xpToNextLevel={xpToNextLevel}
+            />
+          </div>
+        </>
+      ) : null}
+
+      {currentView === "focus" ? (
+        <DashboardFocusView
+          mainWish={data?.mainWish ?? null}
+          nextMission={data?.nextMission ?? null}
+          primaryGoal={data?.primaryGoal ?? null}
+          recommendation={liferaRecommendation}
         />
-        <Card>
-          <h2 className="text-xl font-semibold">Ближайший шаг</h2>
-          {nextStage ? (
-            <div className="mt-4 grid gap-4">
-              <div>
-                <p className="font-medium text-foreground">{nextStage.title}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {nextStage.description ?? "Завершите шаг для XP."}
-                </p>
-              </div>
-              {primaryChallenge ? (
-                <Link href={`/challenges/${primaryChallenge.id}`}>
-                  <Button className="w-full" variant="secondary">
-                    Завершить шаг в миссии
-                  </Button>
-                </Link>
-              ) : null}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              {primaryChallenge ? "Нет активного шага." : "Создайте челлендж."}
-            </p>
-          )}
-        </Card>
-        <DashboardHabitsBlock
-          completedTodayIds={completedTodayHabitIds}
-          habits={activeHabits}
+      ) : null}
+
+      {currentView === "progress" ? (
+        <DashboardProgressView
+          achievementsSummary={achievementsSummary}
+          primaryGoal={data?.primaryGoal ?? null}
+          progressSummary={
+            data?.progressSummary ?? {
+              completedMissions: 0,
+              goalProgress: 0,
+              hasMovement: false,
+              level,
+              streak,
+              unlockedAchievements,
+              xp: xpTotal,
+            }
+          }
+          xpToNextLevel={xpToNextLevel}
         />
-        <ProgressCard
-          description="Средний прогресс целей и челленджей."
-          label="Экосистема"
-          value={Math.round(
-            [...activeGoals, ...activeChallenges].reduce(
-              (sum, item) => sum + Number(item.progress),
-              0,
-            ) / Math.max(1, activeGoals.length + activeChallenges.length),
-          )}
-        />
-        <Card>
-          <h2 className="text-xl font-semibold">Последние достижения</h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Открыто {unlockedAchievements} из {achievements.length}.
-          </p>
-          {recentAchievements.length > 0 ? (
-            <div className="mt-4 grid gap-3">
-              {recentAchievements.map((achievement) => (
-                <AchievementCard
-                  description={achievement.description}
-                  isPremium={achievement.is_premium}
-                  key={achievement.id}
-                  status="unlocked"
-                  title={achievement.title}
-                  unlockedAt={achievement.unlocked_at}
-                  xpReward={Number(achievement.xp_reward)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-muted-foreground">Завершите шаг челленджа.</p>
-          )}
-          <Link className="mt-4 inline-flex text-sm font-semibold text-primary" href="/achievements">
-            Все достижения
-          </Link>
-        </Card>
-      </aside>
-    </section>
+      ) : null}
+    </PageContent>
   );
 }

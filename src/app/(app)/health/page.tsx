@@ -1,20 +1,69 @@
-import Link from "next/link";
+import { Activity, Leaf, Moon, Wind, Zap } from "lucide-react";
 
-import { PageTitle } from "@/components/layout/page-title";
-import { BranchActivitiesSection } from "@/components/data/branch-activities-section";
-import { BranchInsightCard } from "@/components/data/branch-insight-card";
-import { CreateHealthEntryForm } from "@/components/data/create-health-entry-form";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Progress } from "@/components/ui/progress";
-import { StatCard } from "@/components/ui/stat-card";
+import { HealthBodyMap } from "@/components/health/health-body-map";
+import { HealthCreateAction } from "@/components/health/health-create-action";
+import { HealthDynamicsView } from "@/components/health/health-dynamics-view";
+import { HealthGoal } from "@/components/health/health-goal";
+import { HealthHero } from "@/components/health/health-hero";
+import { HealthInsight } from "@/components/health/health-insight";
+import { HealthJournal } from "@/components/health/health-journal";
+import { HealthLatestEntry } from "@/components/health/health-latest-entry";
+import { HealthMetricCard } from "@/components/health/health-metric-card";
+import { HealthProblemZones } from "@/components/health/health-problem-zones";
+import { PageContent } from "@/components/layout/page-content";
 import { getCurrentUser } from "@/lib/auth/session";
-import { formatDate } from "@/lib/domain/labels";
 import { getHealthBranchData } from "@/lib/domain/health";
+import { todayIsoDate } from "@/lib/utils/date";
 
 export const dynamic = "force-dynamic";
 
-export default async function HealthPage() {
+type HealthView = "overview" | "body-map" | "history";
+
+type HealthPageProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+function parseHealthView(view?: string): HealthView {
+  if (view === "body-map") return "body-map";
+  if (view === "history") return "history";
+  return "overview";
+}
+
+function QuickCheckinCard({ hasTodayEntry }: { hasTodayEntry: boolean }) {
+  return (
+    <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-white/5 dark:bg-zinc-900/70">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+            Ежедневный check-in
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+            Один раз в день зафиксируйте энергию, сон, восстановление, стресс и активность.
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="grid h-10 w-10 place-items-center rounded-xl border border-orange-200/60 bg-orange-50 text-orange-600 dark:border-orange-500/15 dark:bg-orange-500/10 dark:text-orange-400">
+            <Activity aria-hidden="true" size={18} />
+          </span>
+          {hasTodayEntry ? (
+            <span className="rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">
+              Сегодня заполнено
+            </span>
+          ) : (
+            <span className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+              Сегодня не заполнено
+            </span>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default async function HealthPage({ searchParams }: HealthPageProps) {
+  const params = await searchParams;
+  const view = parseHealthView(params.view);
+
   const { supabase, user } = await getCurrentUser();
   let data: Awaited<ReturnType<typeof getHealthBranchData>> | null = null;
   let loadError: string | null = null;
@@ -23,143 +72,129 @@ export default async function HealthPage() {
     try {
       data = await getHealthBranchData(supabase, user.id);
     } catch (error) {
-      loadError = error instanceof Error ? error.message : "Не удалось загрузить wellness-данные.";
+      loadError =
+        error instanceof Error ? error.message : "Не удалось загрузить данные здоровья.";
     }
   }
 
+  const latest = data?.latest ?? null;
+  const wellnessScore = latest !== null ? (data?.wellnessScore ?? null) : null;
+  const history = data?.history ?? [];
+  const allHistory = data?.allHistory ?? [];
+  const hasEnoughForDynamics = data?.hasEnoughDataForDynamics ?? false;
+
+  const energyVal = latest ? Math.round(latest.energy_level * 10) : null;
+  const sleepVal = latest ? Math.round((latest.sleep_hours / 8) * 100) : null;
+  const recoveryVal = latest ? Math.round(latest.recovery_score * 10) : null;
+  const stressVal = latest ? Math.max(0, Math.round(100 - latest.recovery_score * 10)) : null;
+
+  const notAuthenticated = !supabase || !user;
+
+  const hasTodayEntry = latest?.date === todayIsoDate();
+
   return (
-    <section className="mx-auto grid w-full max-w-6xl gap-6 overflow-x-hidden px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid min-w-0 content-start gap-6">
-        <PageTitle subtitle="Wellness-ветка без медицинских рекомендаций." title="Здоровье" />
+    <PageContent aria-label="Здоровье" role="main">
+      <HealthCreateAction hasTodayEntry={hasTodayEntry} />
 
-        <Card variant="muted">
-          <p className="text-sm leading-6 text-muted-foreground">
-            Раздел не является медицинской рекомендацией. Lifera помогает отслеживать wellness и
-            связь с целями — без диагнозов и лечения.
-          </p>
-        </Card>
-
+      <div
+        aria-label={`Активный раздел здоровья: ${view}`}
+        className="grid min-w-0 gap-5 xl:gap-6"
+        role="tabpanel"
+      >
         {loadError ? (
-          <Card className="border-danger/25 bg-danger-subtle">
-            <p className="text-sm text-danger-foreground">{loadError}</p>
-          </Card>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
+            {loadError}
+          </div>
         ) : null}
 
-        {!supabase || !user ? (
-          <Card variant="muted">
-            <p className="text-sm text-muted-foreground">Войдите, чтобы вести wellness-журнал.</p>
-          </Card>
+        {notAuthenticated ? (
+          <div className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            Войдите, чтобы вести журнал состояния.
+          </div>
         ) : null}
 
-        {data ? (
-          <>
-            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-              <StatCard
-                detail="сводный индекс"
-                label="Wellness score"
-                progress={data.wellnessScore}
-                value={`${data.wellnessScore}`}
-              />
-              <StatCard
-                detail="1–10"
-                label="Энергия"
-                value={`${data.latest?.energy_level ?? "—"}`}
-              />
-              <StatCard
-                detail="часы"
-                label="Сон"
-                value={`${data.latest?.sleep_hours ?? "—"}`}
-              />
-              <StatCard
-                detail="минуты"
-                label="Активность"
-                value={`${data.latest?.activity_minutes ?? "—"}`}
-              />
+        {/* ── Обзор ─────────────────────────────────────────────────────────── */}
+        {view === "overview" && data ? (
+          <div
+            aria-label="Обзор самочувствия"
+            className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]"
+          >
+            {/* Main column */}
+            <div className="grid min-w-0 content-start gap-5 xl:gap-6">
+              <HealthHero latest={latest} wellnessScore={wellnessScore} />
+
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <HealthMetricCard
+                  empty={energyVal === null}
+                  icon={<Zap className="text-amber-500" size={15} />}
+                  iconBg="bg-amber-50 dark:bg-amber-500/10"
+                  label="Энергия"
+                  progressColor="bg-amber-500"
+                  value={energyVal}
+                />
+                <HealthMetricCard
+                  empty={sleepVal === null}
+                  icon={<Moon className="text-blue-500" size={15} />}
+                  iconBg="bg-blue-50 dark:bg-blue-500/10"
+                  label="Сон"
+                  progressColor="bg-blue-500"
+                  value={sleepVal}
+                />
+                <HealthMetricCard
+                  empty={recoveryVal === null}
+                  icon={<Leaf className="text-green-500" size={15} />}
+                  iconBg="bg-green-50 dark:bg-green-500/10"
+                  label="Восстановление"
+                  progressColor="bg-green-500"
+                  value={recoveryVal}
+                />
+                <HealthMetricCard
+                  empty={stressVal === null}
+                  icon={<Wind className="text-rose-500" size={15} />}
+                  iconBg="bg-rose-50 dark:bg-rose-500/10"
+                  label="Стресс"
+                  progressColor="bg-rose-500"
+                  stressInverted
+                  value={stressVal}
+                />
+              </div>
+
+              <QuickCheckinCard hasTodayEntry={hasTodayEntry} />
+
+              <div aria-label="Динамика недели">
+                <HealthDynamicsView
+                  allHistory={allHistory}
+                  hasEnoughData={hasEnoughForDynamics}
+                />
+              </div>
             </div>
 
-            <BranchInsightCard content={data.insight.content} title={data.insight.title} />
+            {/* Right column */}
+            <aside className="min-w-0 self-start">
+              <div className="grid gap-5 xl:sticky xl:top-[calc(var(--topbar-height)+1rem)]">
+                <HealthInsight history={history} latest={latest} />
+                <HealthProblemZones />
+                <HealthLatestEntry latest={latest} />
+                <HealthGoal current={wellnessScore} target={80} />
+              </div>
+            </aside>
+          </div>
+        ) : null}
 
-            {data.latest ? (
-              <Card>
-                <h2 className="text-xl font-semibold">Последняя запись</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDate(data.latest.date) ?? data.latest.date}
-                </p>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Восстановление</p>
-                    <p className="mt-1 text-2xl font-semibold">{data.latest.recovery_score}/10</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">Wellness progress</p>
-                    <Progress className="mt-2" tone="success" value={data.wellnessScore} />
-                  </div>
-                </div>
-                {data.latest.note ? (
-                  <p className="mt-4 text-sm leading-6 text-muted-foreground">{data.latest.note}</p>
-                ) : null}
-              </Card>
-            ) : (
-              <EmptyState description="Добавьте первую запись." title="Журнал пуст">
-                <Link className="text-sm font-semibold text-primary hover:underline" href="#health-entry">
-                  Добавить запись
-                </Link>
-              </EmptyState>
-            )}
+        {/* ── Карта тела ────────────────────────────────────────────────────── */}
+        {view === "body-map" ? (
+          <div aria-label="Карта тела">
+            <HealthBodyMap />
+          </div>
+        ) : null}
 
-            {data.history.length > 1 ? (
-              <Card>
-                <h2 className="text-xl font-semibold">Недавняя динамика</h2>
-                <div className="mt-4 grid gap-3">
-                  {data.history.slice(1, 5).map((entry) => (
-                    <div
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-border bg-surface-muted px-4 py-3 text-sm"
-                      key={entry.date}
-                    >
-                      <span className="font-medium">{formatDate(entry.date) ?? entry.date}</span>
-                      <span className="text-muted-foreground">
-                        E {entry.energy_level} · S {entry.sleep_hours}ч · A {entry.activity_minutes}м
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
-            <BranchActivitiesSection
-              branch="health"
-              challenges={data.activities.challenges}
-              goals={data.activities.goals}
-              habits={data.activities.habits}
-              title="Wellness-активности"
-            />
-          </>
+        {/* ── История ───────────────────────────────────────────────────────── */}
+        {view === "history" ? (
+          <div aria-label="История записей">
+            <HealthJournal entries={allHistory} />
+          </div>
         ) : null}
       </div>
-
-      <aside className="grid min-w-0 content-start gap-6">
-        <Card id="health-entry">
-          <h2 className="text-xl font-semibold">Wellness-запись</h2>
-          <div className="mt-4">
-            {supabase && user ? (
-              <CreateHealthEntryForm />
-            ) : (
-              <p className="text-sm text-muted-foreground">Войдите, чтобы добавить запись.</p>
-            )}
-          </div>
-        </Card>
-
-        <Card variant="muted">
-          <div className="grid gap-2">
-            <Link className="text-sm font-semibold text-primary hover:underline" href="/progress">
-              Смотреть прогресс
-            </Link>
-            <Link className="text-sm font-semibold text-primary hover:underline" href="/habits">
-              Создать wellness-ритуал
-            </Link>
-          </div>
-        </Card>
-      </aside>
-    </section>
+    </PageContent>
   );
 }

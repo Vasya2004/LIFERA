@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { BranchRecommendation } from "@/lib/domain/branches";
 import type { Challenge, Goal, Habit, Skill, SkillStatus } from "@/lib/domain/types";
 
 export const SKILL_CATEGORIES: Record<string, string> = {
@@ -28,18 +29,31 @@ export type SkillWithActivities = Skill & {
   linkedHabits: Habit[];
 };
 
+export type SkillsHeroSummary = {
+  activeCount: number;
+  averageProgress: number;
+  topSkill: { progress: number; title: string } | null;
+  totalCount: number;
+  totalXp: number;
+};
+
 export type SkillsBranchData = {
   developmentActivities: {
     challenges: Challenge[];
     goals: Goal[];
     habits: Habit[];
   };
+  focusSkills: SkillWithActivities[];
+  hero: SkillsHeroSummary;
   insight: SkillInsight;
+  recommendation: BranchRecommendation;
   skills: SkillWithActivities[];
 };
 
+const SKILL_XP_PER_LEVEL = 100;
+
 function skillLevelFromXp(xpTotal: number) {
-  return Math.floor(xpTotal / 100) + 1;
+  return Math.floor(xpTotal / SKILL_XP_PER_LEVEL) + 1;
 }
 
 function enrichSkill(
@@ -85,14 +99,27 @@ export function buildSkillInsight(input: {
   developmentActivities: SkillsBranchData["developmentActivities"];
   skills: SkillWithActivities[];
 }): SkillInsight {
+  const recommendation = buildSkillsRecommendation(input);
+  return {
+    content: recommendation.content,
+    title: recommendation.title,
+  };
+}
+
+export function buildSkillsRecommendation(input: {
+  developmentActivities: SkillsBranchData["developmentActivities"];
+  skills: SkillWithActivities[];
+}): BranchRecommendation {
   const { developmentActivities, skills } = input;
   const activeSkills = skills.filter((skill) => skill.status === "active");
 
   if (activeSkills.length === 0) {
     return {
       content:
-        "Добавьте первый навык — язык, технологию или soft skill — и свяжите его с целью или ритуалом прокачки.",
-      title: "Начните ветку компетенций",
+        "Добавьте первый навык — язык, технологию или soft skill — и развивайте его через цель или привычку.",
+      ctaHref: "#create-skill",
+      ctaLabel: "Добавить навык",
+      title: "Добавьте первый навык",
     };
   }
 
@@ -102,45 +129,97 @@ export function buildSkillInsight(input: {
 
   if (unlinked) {
     return {
-      content: `«${unlinked.title}» пока не связан с целями и ритуалами. Создайте квест или привычку, чтобы навык рос через реальные действия.`,
-      title: "Свяжите навык с действием",
+      content: `«${unlinked.title}» пока не связан с целями или привычками. Создайте привычку или цель, чтобы навык рос через действия.`,
+      ctaHref: "/habits",
+      ctaLabel: "Связать с привычкой",
+      title: "Свяжите навык с привычкой",
     };
   }
 
-  const withHabit = activeSkills.find((skill) => skill.linkedHabits.length > 0);
+  const withoutHabit = activeSkills.find((skill) => skill.linkedHabits.length === 0);
 
-  if (withHabit) {
+  if (withoutHabit) {
     return {
-      content: `«${withHabit.title}» поддерживается ритуалами — удерживайте регулярность, чтобы XP и progress росли стабильно.`,
-      title: "Регулярность усиливает навык",
+      content: `«${withoutHabit.title}» связан с целями, но без регулярной привычки прогресс будет медленным. Добавьте короткую практику.`,
+      ctaHref: "/habits",
+      ctaLabel: "Создать привычку",
+      title: "Свяжите навык с привычкой",
     };
   }
 
-  const developing = activeSkills.find(
-    (skill) =>
-      skill.computedProgress >= 15 &&
-      (skill.linkedGoals.length > 0 || skill.linkedHabits.length > 0),
-  );
+  const focusSkill = [...activeSkills].sort(
+    (left, right) => right.computedProgress - left.computedProgress,
+  )[0];
 
-  if (developing) {
+  if (focusSkill) {
     return {
-      content: `«${developing.title}» уже получает вклад от ваших действий — продолжайте связанные квесты и ритуалы.`,
-      title: "Навык развивается",
+      content: `Выберите «${focusSkill.title}» как фокус недели — удерживайте связанные привычки.`,
+      ctaHref: "/goals",
+      ctaLabel: "Открыть цели",
+      title: "Выберите один навык для фокуса недели",
     };
   }
 
   if (developmentActivities.goals.length > 0) {
     return {
       content:
-        "Есть активность в сферах карьеры и обучения. Привяжите цели к навыкам, чтобы видеть вклад компетенций в прогресс.",
+        "Есть активность в сферах карьеры и обучения. Привяжите цели к навыкам, чтобы видеть вклад компетенций.",
+      ctaHref: "/goals",
+      ctaLabel: "Открыть цели",
       title: "Развитие через цели",
     };
   }
 
   return {
-    content: "Навыки зафиксированы. Следующий шаг — связать их с квестами или ритуалами прокачки.",
+    content: "Навыки зафиксированы. Следующий шаг — связать их с регулярными привычками.",
+    ctaHref: "/habits",
+    ctaLabel: "Открыть привычки",
     title: "Компетенции в фокусе",
   };
+}
+
+function buildSkillsHero(skills: SkillWithActivities[]): SkillsHeroSummary {
+  const activeSkills = skills.filter((skill) => skill.status === "active");
+  const averageProgress =
+    activeSkills.length > 0
+      ? Math.round(
+          activeSkills.reduce((sum, skill) => sum + skill.computedProgress, 0) /
+            activeSkills.length,
+        )
+      : 0;
+  const topSkill =
+    activeSkills.length > 0
+      ? [...activeSkills].sort((left, right) => right.computedProgress - left.computedProgress)[0]
+      : null;
+
+  return {
+    activeCount: activeSkills.length,
+    averageProgress,
+    topSkill: topSkill
+      ? { progress: topSkill.computedProgress, title: topSkill.title }
+      : null,
+    totalCount: skills.length,
+    totalXp: activeSkills.reduce((sum, skill) => sum + skill.computedXp, 0),
+  };
+}
+
+function buildSkillsFocus(skills: SkillWithActivities[]): SkillWithActivities[] {
+  const activeSkills = skills.filter((skill) => skill.status === "active");
+
+  return [...activeSkills]
+    .sort((left, right) => {
+      const leftUnlinked =
+        left.linkedGoals.length === 0 && left.linkedHabits.length === 0 ? 0 : 1;
+      const rightUnlinked =
+        right.linkedGoals.length === 0 && right.linkedHabits.length === 0 ? 0 : 1;
+
+      if (leftUnlinked !== rightUnlinked) {
+        return leftUnlinked - rightUnlinked;
+      }
+
+      return left.computedProgress - right.computedProgress;
+    })
+    .slice(0, 3);
 }
 
 export async function getSkillsBranchData(
@@ -220,9 +299,14 @@ export async function getSkillsBranchData(
     ),
   };
 
+  const insightInput = { developmentActivities, skills };
+
   return {
     developmentActivities,
-    insight: buildSkillInsight({ developmentActivities, skills }),
+    focusSkills: buildSkillsFocus(skills),
+    hero: buildSkillsHero(skills),
+    insight: buildSkillInsight(insightInput),
+    recommendation: buildSkillsRecommendation(insightInput),
     skills,
   };
 }
