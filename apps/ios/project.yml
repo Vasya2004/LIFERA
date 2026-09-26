@@ -15,10 +15,9 @@ targets:
     platform: iOS
     sources:
       - path: Lifera2/Sources
-    resources:
-      - path: Lifera2/Resources
+      - path: Lifera2/Resources/Assets.xcassets
     info:
-      path: Lifera2/Resources/Info.plist
+      path: Lifera2/Info.plist
       properties:
         UILaunchScreen: {}
         CFBundleDisplayName: LIFERA 2.0
