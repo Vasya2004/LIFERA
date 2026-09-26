@@ -5,12 +5,16 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   Archive,
+  CheckSquare,
   Clapperboard,
   Gamepad2,
+  LayoutDashboard,
   LayoutGrid,
+  ListChecks,
   LogOut,
   Map,
   Package,
+  PenLine,
   type LucideIcon,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/areas/actions";
@@ -36,6 +40,12 @@ const VAULTERA_ITEMS = [
   { label: "Путешествия", href: "/vaultera/travel", icon: Map },
 ];
 
+const DOIT_ITEMS = [
+  { label: "Дашборд", href: "/doit/dashboard", icon: LayoutDashboard },
+  { label: "Привычки на день", href: "/doit/daily", icon: CheckSquare },
+  { label: "Креатор-привычки", href: "/doit/creator", icon: PenLine },
+];
+
 const SECTIONS: Section[] = [
   {
     key: "areas",
@@ -50,6 +60,13 @@ const SECTIONS: Section[] = [
     icon: Archive,
     href: "/vaultera/movies",
     match: (pathname) => pathname.startsWith("/vaultera"),
+  },
+  {
+    key: "doit",
+    label: "doit",
+    icon: ListChecks,
+    href: "/doit/dashboard",
+    match: (pathname) => pathname.startsWith("/doit"),
   },
 ];
 
@@ -132,6 +149,20 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
           {activeSection.key === "vaultera" && (
             <div className="flex flex-col gap-0.5">
               {VAULTERA_ITEMS.map((item) => (
+                <PanelLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  active={pathname === item.href}
+                />
+              ))}
+            </div>
+          )}
+
+          {activeSection.key === "doit" && (
+            <div className="flex flex-col gap-0.5">
+              {DOIT_ITEMS.map((item) => (
                 <PanelLink
                   key={item.href}
                   href={item.href}

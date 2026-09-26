@@ -10,9 +10,13 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
 
-  /* Токены модуля VAULTERA — значения переопределяются внутри .vaultera-scope,
-     здесь только регистрация имён утилит для Tailwind (bg-primary и т.д.). */
+/* Токены модулей VAULTERA/doit — только регистрация имён утилит Tailwind
+   (bg-primary, text-accent и т.д.). Обычный (не inline) @theme оставляет
+   var(--color-x) как живую ссылку, поэтому .vaultera-scope/.doit-scope
+   могут переопределять фактическое значение во время рендера. */
+@theme {
   --color-card: hsl(213 18% 13%);
   --color-card-foreground: hsl(36 14% 90%);
   --color-primary: hsl(6 75% 58%);
@@ -28,6 +32,11 @@
   --color-border: hsl(212 18% 16%);
   --color-input: hsl(212 18% 16%);
   --color-ring: hsl(6 75% 58%);
+
+  --color-surface: #16161d;
+  --color-accent-soft: #221f3d;
+  --color-success: #22c77e;
+  --color-danger: #f2685c;
 }
 
 @media (prefers-color-scheme: dark) {

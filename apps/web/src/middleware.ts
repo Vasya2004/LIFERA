@@ -34,7 +34,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/register");
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/areas") ||
-    request.nextUrl.pathname.startsWith("/vaultera");
+    request.nextUrl.pathname.startsWith("/vaultera") ||
+    request.nextUrl.pathname.startsWith("/doit");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
