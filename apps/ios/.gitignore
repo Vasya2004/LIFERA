@@ -1,0 +1,9 @@
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+
+# Проект генерируется через XcodeGen из project.yml (см. README.md)
+*.xcodeproj/
