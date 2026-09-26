@@ -32,7 +32,9 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/register");
-  const isProtectedRoute = request.nextUrl.pathname.startsWith("/areas");
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith("/areas") ||
+    request.nextUrl.pathname.startsWith("/vaultera");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();

@@ -49,7 +49,7 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
-      <h1 className="text-2xl font-semibold">Регистрация в LIFERA 2.0</h1>
+      <h1 className="text-2xl font-semibold">Регистрация в LIFERA</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="email"

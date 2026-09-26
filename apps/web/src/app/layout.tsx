@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LIFERA 2.0",
+  title: "LIFERA",
   description: "Личная система управления жизнью",
 };
 

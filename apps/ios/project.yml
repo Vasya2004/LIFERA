@@ -20,7 +20,7 @@ targets:
       path: Lifera2/Info.plist
       properties:
         UILaunchScreen: {}
-        CFBundleDisplayName: LIFERA 2.0
+        CFBundleDisplayName: LIFERA
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.lifera.lifera2

@@ -10,7 +10,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text("Вход в LIFERA 2.0")
+                Text("Вход в LIFERA")
                     .font(.title2.bold())
 
                 TextField("Email", text: $email)

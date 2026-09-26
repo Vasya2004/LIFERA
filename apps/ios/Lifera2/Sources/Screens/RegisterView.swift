@@ -21,7 +21,7 @@ struct RegisterView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             } else {
-                Text("Регистрация в LIFERA 2.0")
+                Text("Регистрация в LIFERA")
                     .font(.title2.bold())
 
                 TextField("Email", text: $email)
