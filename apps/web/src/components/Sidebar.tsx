@@ -1,24 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
   Archive,
-  ChevronDown,
   Clapperboard,
   Gamepad2,
   LayoutGrid,
   LogOut,
   Map,
   Package,
+  type LucideIcon,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/areas/actions";
 
 type LifeArea = {
   id: string;
   name: string;
+};
+
+type Section = {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  href: string;
+  match: (pathname: string) => boolean;
 };
 
 const VAULTERA_ITEMS = [
@@ -29,7 +36,24 @@ const VAULTERA_ITEMS = [
   { label: "Путешествия", href: "/vaultera/travel", icon: Map },
 ];
 
-function NavLink({
+const SECTIONS: Section[] = [
+  {
+    key: "areas",
+    label: "Мои области жизни",
+    icon: LayoutGrid,
+    href: "/areas",
+    match: (pathname) => pathname.startsWith("/areas"),
+  },
+  {
+    key: "vaultera",
+    label: "VAULTERA",
+    icon: Archive,
+    href: "/vaultera/movies",
+    match: (pathname) => pathname.startsWith("/vaultera"),
+  },
+];
+
+function PanelLink({
   href,
   label,
   icon: Icon,
@@ -37,7 +61,7 @@ function NavLink({
 }: {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   active: boolean;
 }) {
   return (
@@ -57,41 +81,58 @@ function NavLink({
 
 export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   const pathname = usePathname();
-  const [vaulteraOpen, setVaulteraOpen] = useState(pathname.startsWith("/vaultera"));
+  const activeSection = SECTIONS.find((s) => s.match(pathname)) ?? SECTIONS[0];
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-neutral-800 bg-neutral-950 text-neutral-100">
-      <div className="flex items-center gap-2 px-4 py-4">
+    <div className="flex h-screen shrink-0">
+      {/* Иконка-полоса */}
+      <aside className="flex w-16 shrink-0 flex-col items-center border-r border-neutral-800 bg-black py-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/lifera-icon.svg" alt="LIFERA" className="h-7 w-7 shrink-0 rounded-md" />
-        <span className="text-sm font-semibold tracking-wide">LIFERA</span>
-      </div>
+        <img src="/brand/lifera-icon.svg" alt="LIFERA" className="mb-3 h-9 w-9 shrink-0 rounded-xl" />
 
-      <nav className="flex-1 overflow-y-auto px-2.5 pb-4">
-        <div className="mb-1 px-2 pt-2 text-[11px] font-medium uppercase tracking-wider text-neutral-500">
-          Модули
-        </div>
-        <div>
+        <nav className="flex flex-1 flex-col items-center gap-1.5">
+          {SECTIONS.map((section) => {
+            const isActive = section.key === activeSection.key;
+            const Icon = section.icon;
+            return (
+              <Link
+                key={section.key}
+                href={section.href}
+                title={section.label}
+                className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                  isActive
+                    ? "bg-neutral-800 text-white"
+                    : "text-neutral-500 hover:bg-neutral-800/60 hover:text-neutral-300"
+                }`}
+              >
+                <Icon size={20} />
+              </Link>
+            );
+          })}
+        </nav>
+
+        <form action={signOut}>
           <button
-            type="button"
-            onClick={() => setVaulteraOpen((v) => !v)}
-            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
-              pathname.startsWith("/vaultera")
-                ? "bg-neutral-800 text-white"
-                : "text-neutral-300 hover:bg-neutral-800/60"
-            }`}
+            type="submit"
+            title="Выйти"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition-colors hover:bg-neutral-800/60 hover:text-neutral-300"
           >
-            <Archive size={16} className="shrink-0" />
-            <span className="flex-1 truncate text-left">VAULTERA</span>
-            <ChevronDown
-              size={14}
-              className={`shrink-0 transition-transform ${vaulteraOpen ? "rotate-180" : ""}`}
-            />
+            <LogOut size={18} />
           </button>
-          {vaulteraOpen && (
-            <div className="mt-0.5 flex flex-col gap-0.5 border-l border-neutral-800 pl-3.5 ml-4">
+        </form>
+      </aside>
+
+      {/* Панель-остров с подразделами активного блока */}
+      <aside className="flex w-64 shrink-0 flex-col border-r border-neutral-800 bg-neutral-950 text-neutral-100">
+        <div className="px-4 py-4">
+          <span className="text-sm font-semibold tracking-wide">{activeSection.label}</span>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-2.5 pb-4">
+          {activeSection.key === "vaultera" && (
+            <div className="flex flex-col gap-0.5">
               {VAULTERA_ITEMS.map((item) => (
-                <NavLink
+                <PanelLink
                   key={item.href}
                   href={item.href}
                   label={item.label}
@@ -101,36 +142,23 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
               ))}
             </div>
           )}
-        </div>
 
-        <div className="mb-1 mt-5 px-2 text-[11px] font-medium uppercase tracking-wider text-neutral-500">
-          Мои области жизни
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <NavLink href="/areas" label="Все области" icon={LayoutGrid} active={pathname === "/areas"} />
-          {lifeAreas.map((area) => (
-            <NavLink
-              key={area.id}
-              href={`/areas/${area.id}`}
-              label={area.name}
-              icon={LayoutGrid}
-              active={pathname === `/areas/${area.id}`}
-            />
-          ))}
-        </div>
-      </nav>
-
-      <div className="border-t border-neutral-800 p-2.5">
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-neutral-400 transition-colors hover:bg-neutral-800/60 hover:text-neutral-200"
-          >
-            <LogOut size={16} />
-            Выйти
-          </button>
-        </form>
-      </div>
-    </aside>
+          {activeSection.key === "areas" && (
+            <div className="flex flex-col gap-0.5">
+              <PanelLink href="/areas" label="Все области" icon={LayoutGrid} active={pathname === "/areas"} />
+              {lifeAreas.map((area) => (
+                <PanelLink
+                  key={area.id}
+                  href={`/areas/${area.id}`}
+                  label={area.name}
+                  icon={LayoutGrid}
+                  active={pathname === `/areas/${area.id}`}
+                />
+              ))}
+            </div>
+          )}
+        </nav>
+      </aside>
+    </div>
   );
 }
