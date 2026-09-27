@@ -11,6 +11,7 @@ import {
   ChevronsRight,
   Clapperboard,
   Gamepad2,
+  Home,
   LayoutDashboard,
   LayoutGrid,
   ListChecks,
@@ -157,6 +158,18 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
               alt="Области"
               className="h-8 w-auto shrink-0"
             />
+          </Link>
+
+          <Link
+            href="/areas"
+            title="Главный дашборд"
+            className={`flex h-14 w-16 items-center justify-center rounded-2xl transition-colors ${
+              activeSection.key === "areas" && pathname === "/areas"
+                ? "bg-white text-black"
+                : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+            }`}
+          >
+            <Home size={26} className="shrink-0" />
           </Link>
 
           <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
