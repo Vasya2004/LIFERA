@@ -45,6 +45,26 @@
   min-height: 100vh;
 }
 
+.vaultera-scope.light {
+  --background: 34 26% 95%;
+  --foreground: 216 19% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 216 19% 12%;
+  --primary: 6 68% 54%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 34 16% 90%;
+  --secondary-foreground: 216 19% 16%;
+  --muted: 34 14% 92%;
+  --muted-foreground: 211 10% 42%;
+  --accent: 6 68% 54%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 34 12% 88%;
+  --input: 34 12% 90%;
+  --ring: 6 68% 54%;
+}
+
 .vaultera-scope * {
   border-color: hsl(var(--border));
 }
