@@ -1,0 +1,48 @@
+/* Токены doit — активны только внутри .doit-scope. */
+
+.doit-scope {
+  --background: #f7f7fb;
+  --surface: #ffffff;
+  --foreground: #16161d;
+  --muted: #6b6b78;
+  --border: #e8e8ef;
+  --accent: #6d5ef8;
+  --accent-foreground: #ffffff;
+  --accent-soft: #efecff;
+  --success: #17b26a;
+  --danger: #f04438;
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+.doit-scope * {
+  border-color: hsl(var(--border));
+}
+
+@media (prefers-color-scheme: dark) {
+  .doit-scope {
+    --background: #0b0b10;
+    --surface: #16161d;
+    --foreground: #f2f2f7;
+    --muted: #9a9aa8;
+    --border: #26262f;
+    --accent: #8b7bff;
+    --accent-foreground: #0b0b10;
+    --accent-soft: #221f3d;
+    --success: #22c77e;
+    --danger: #f2685c;
+  }
+}
