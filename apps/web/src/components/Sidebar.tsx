@@ -112,7 +112,8 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
           <Link
             href="/areas"
-            className={`flex w-16 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 transition-colors ${
+            title="Области"
+            className={`flex h-14 w-16 items-center justify-center rounded-2xl transition-colors ${
               activeSection.key === "areas"
                 ? "bg-white text-black"
                 : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
@@ -121,12 +122,9 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={activeSection.key === "areas" ? "/brand/lifera-mark.svg" : "/brand/lifera-mark-dark.svg"}
-              alt=""
-              className="h-5 w-auto shrink-0"
+              alt="Области"
+              className="h-6 w-auto shrink-0"
             />
-            <span className="w-full truncate text-center text-[10px] font-medium leading-tight">
-              Области
-            </span>
           </Link>
 
           <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
