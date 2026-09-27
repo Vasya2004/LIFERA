@@ -47,15 +47,16 @@ const DOIT_ITEMS = [
   { label: "Креатор-привычки", href: "/doit/creator", icon: PenLine },
 ];
 
+const AREAS_SECTION: Section = {
+  key: "areas",
+  label: "Мои области жизни",
+  railLabel: "Области",
+  icon: LayoutGrid,
+  href: "/areas",
+  match: (pathname) => pathname.startsWith("/areas"),
+};
+
 const SECTIONS: Section[] = [
-  {
-    key: "areas",
-    label: "Мои области жизни",
-    railLabel: "Области",
-    icon: LayoutGrid,
-    href: "/areas",
-    match: (pathname) => pathname.startsWith("/areas"),
-  },
   {
     key: "vaultera",
     label: "VAULTERA",
@@ -102,18 +103,34 @@ function PanelLink({
 
 export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   const pathname = usePathname();
-  const activeSection = SECTIONS.find((s) => s.match(pathname)) ?? SECTIONS[0];
+  const activeSection = SECTIONS.find((s) => s.match(pathname)) ?? AREAS_SECTION;
 
   return (
     <div className="flex shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
       {/* Иконка-полоса */}
       <aside className="flex w-20 shrink-0 flex-col items-center py-3">
-        <Link href="/areas" title="Все области" className="mb-4 shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/lifera-icon.svg" alt="LIFERA" className="h-9 w-9 rounded-xl" />
-        </Link>
-
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
+          <Link
+            href="/areas"
+            className={`flex w-16 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 transition-colors ${
+              activeSection.key === "areas"
+                ? "bg-white text-black"
+                : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={activeSection.key === "areas" ? "/brand/lifera-mark.svg" : "/brand/lifera-mark-dark.svg"}
+              alt=""
+              className="h-5 w-auto shrink-0"
+            />
+            <span className="w-full truncate text-center text-[10px] font-medium leading-tight">
+              Области
+            </span>
+          </Link>
+
+          <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
+
           {SECTIONS.map((section) => {
             const isActive = section.key === activeSection.key;
             const Icon = section.icon;
