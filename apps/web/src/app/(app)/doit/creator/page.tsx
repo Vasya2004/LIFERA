@@ -1,28 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { currentWeekStartISO } from "@/lib/doit-dates";
 import CreatorHabitsView from "@/components/CreatorHabitsView";
+import type { CreatorHabit, CreatorHabitLog } from "@/lib/doit/database.types";
 
 export default async function DoitCreatorPage() {
   const supabase = await createClient();
   const weekStart = currentWeekStartISO();
 
-  const [{ data: habits }, { data: logs }] = await Promise.all([
-    supabase
-      .from("creator_habits")
-      .select("*")
-      .eq("is_archived", false)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("creator_habit_logs")
-      .select("*")
-      .eq("week_start", weekStart),
-  ]);
+  const { data } = await supabase
+    .rpc("doit_creator_page_data", { p_week_start: weekStart })
+    .single<{ habits: CreatorHabit[]; logs: CreatorHabitLog[] }>();
 
   return (
     <CreatorHabitsView
-      initialHabits={habits ?? []}
-      initialLogs={logs ?? []}
+      initialHabits={data?.habits ?? []}
+      initialLogs={data?.logs ?? []}
       weekStart={weekStart}
     />
   );

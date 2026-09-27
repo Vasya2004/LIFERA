@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { daysAgoISO, todayISO, currentWeekStartISO, weeksAgoISO } from "@/lib/doit-dates";
 import DashboardView from "@/components/DashboardView";
+import type {
+  CreatorHabit,
+  CreatorHabitLog,
+  DailyHabit,
+  DailyHabitLog,
+} from "@/lib/doit/database.types";
 
 export default async function DoitDashboardPage() {
   const supabase = await createClient();
@@ -9,39 +15,26 @@ export default async function DoitDashboardPage() {
   const weekStart = currentWeekStartISO();
   const eightWeeksAgo = weeksAgoISO(8);
 
-  const [
-    { data: dailyHabits },
-    { data: dailyLogs },
-    { data: creatorHabits },
-    { data: creatorLogs },
-  ] = await Promise.all([
-    supabase
-      .from("daily_habits")
-      .select("*")
-      .eq("is_archived", false)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("daily_habit_logs")
-      .select("*")
-      .gte("log_date", sevenDaysAgo)
-      .lte("log_date", today),
-    supabase
-      .from("creator_habits")
-      .select("*")
-      .eq("is_archived", false)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("creator_habit_logs")
-      .select("*")
-      .gte("week_start", eightWeeksAgo),
-  ]);
+  const { data } = await supabase
+    .rpc("doit_dashboard_data", {
+      p_today: today,
+      p_seven_days_ago: sevenDaysAgo,
+      p_week_start: weekStart,
+      p_eight_weeks_ago: eightWeeksAgo,
+    })
+    .single<{
+      daily_habits: DailyHabit[];
+      daily_logs: DailyHabitLog[];
+      creator_habits: CreatorHabit[];
+      creator_logs: CreatorHabitLog[];
+    }>();
 
   return (
     <DashboardView
-      dailyHabits={dailyHabits ?? []}
-      dailyLogs={dailyLogs ?? []}
-      creatorHabits={creatorHabits ?? []}
-      creatorLogs={creatorLogs ?? []}
+      dailyHabits={data?.daily_habits ?? []}
+      dailyLogs={data?.daily_logs ?? []}
+      creatorHabits={data?.creator_habits ?? []}
+      creatorLogs={data?.creator_logs ?? []}
       today={today}
       weekStart={weekStart}
     />

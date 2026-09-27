@@ -1,25 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/doit-dates";
 import DailyHabitsView from "@/components/DailyHabitsView";
+import type { DailyHabit, DailyHabitLog } from "@/lib/doit/database.types";
 
 export default async function DoitDailyPage() {
   const supabase = await createClient();
   const today = todayISO();
 
-  const [{ data: habits }, { data: logs }] = await Promise.all([
-    supabase
-      .from("daily_habits")
-      .select("*")
-      .eq("is_archived", false)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-    supabase.from("daily_habit_logs").select("*").eq("log_date", today),
-  ]);
+  const { data } = await supabase
+    .rpc("doit_daily_page_data", { p_log_date: today })
+    .single<{ habits: DailyHabit[]; logs: DailyHabitLog[] }>();
 
   return (
     <DailyHabitsView
-      initialHabits={habits ?? []}
-      initialLogs={logs ?? []}
+      initialHabits={data?.habits ?? []}
+      initialLogs={data?.logs ?? []}
       today={today}
     />
   );
