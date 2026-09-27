@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 
 export default function PageHeader({ title, onAdd }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-5 sm:gap-4 sm:py-6 md:py-8">
+    <div className="flex items-center justify-between gap-3 py-1 sm:gap-4 sm:py-2 md:py-2">
       <h1 className="min-w-0 truncate font-bebas text-4xl tracking-wide sm:text-5xl md:text-6xl lg:text-7xl">
         {title}
       </h1>

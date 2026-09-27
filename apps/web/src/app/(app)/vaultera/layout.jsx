@@ -16,7 +16,7 @@ export default function VaulteraLayout({ children }) {
 
   return (
     <div className={`vaultera-scope ${effectiveTheme} ${bebas.variable}`}>
-      <div className="mx-auto min-h-full w-full max-w-[90rem] px-3 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-8 xl:px-10">
+      <div className="mx-auto min-h-full w-full max-w-[90rem] px-3 py-1 sm:px-5 sm:py-2 lg:px-8 lg:py-3 xl:px-10">
         {children}
       </div>
     </div>

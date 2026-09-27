@@ -48,7 +48,7 @@ export default function MediaArchivePage({ title, mediaType, tabs, defaultTab })
   }
 
   return (
-    <PageContainer className="py-4 sm:py-6 lg:py-8">
+    <PageContainer className="py-1 sm:py-2 lg:py-3">
       <PageHeader title={title} onAdd={modal.openCreate} />
 
       {tabs && (

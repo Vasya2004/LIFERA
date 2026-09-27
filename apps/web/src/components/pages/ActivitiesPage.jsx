@@ -39,7 +39,7 @@ export default function ActivitiesPage() {
   }
 
   return (
-    <PageContainer className="py-4 sm:py-6 lg:py-8">
+    <PageContainer className="py-1 sm:py-2 lg:py-3">
       <PageHeader title="АКТИВНОСТИ" onAdd={modal.openCreate} />
 
       {entries.length > 0 && (

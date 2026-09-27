@@ -38,7 +38,7 @@ export default function ThingsPage() {
   }
 
   return (
-    <PageContainer className="py-4 sm:py-6 lg:py-8">
+    <PageContainer className="py-1 sm:py-2 lg:py-3">
       <PageHeader title="ВЕЩИ" onAdd={modal.openCreate} />
 
       {entries.length > 0 && (
