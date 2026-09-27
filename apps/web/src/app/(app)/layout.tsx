@@ -10,9 +10,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .order("created_at", { ascending: true });
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen gap-3 bg-neutral-100 p-3">
       <Sidebar lifeAreas={lifeAreas ?? []} />
-      <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden rounded-2xl bg-white">{children}</main>
     </div>
   );
 }

@@ -105,9 +105,9 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   const activeSection = SECTIONS.find((s) => s.match(pathname)) ?? SECTIONS[0];
 
   return (
-    <div className="flex h-screen shrink-0">
+    <div className="flex shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
       {/* Иконка-полоса */}
-      <aside className="flex w-20 shrink-0 flex-col items-center border-r border-neutral-800 bg-black py-3">
+      <aside className="flex w-20 shrink-0 flex-col items-center py-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/lifera-icon.svg" alt="LIFERA" className="mb-4 h-9 w-9 shrink-0 rounded-xl" />
 
@@ -146,7 +146,7 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
       </aside>
 
       {/* Панель-остров с подразделами активного блока */}
-      <aside className="flex w-64 shrink-0 flex-col border-r border-neutral-800 bg-neutral-950 text-neutral-100">
+      <aside className="flex w-64 shrink-0 flex-col border-l border-neutral-900 bg-neutral-950 text-neutral-100">
         <div className="px-4 py-4">
           <span className="text-sm font-semibold tracking-wide">{activeSection.label}</span>
         </div>
