@@ -15,6 +15,7 @@ import {
   Map,
   Package,
   PenLine,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/areas/actions";
@@ -150,6 +151,18 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
             );
           })}
         </nav>
+
+        <Link
+          href="/settings"
+          className={`flex w-16 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 transition-colors ${
+            pathname.startsWith("/settings")
+              ? "bg-white text-black"
+              : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+          }`}
+        >
+          <Settings size={20} className="shrink-0" />
+          <span className="text-[10px] font-medium leading-tight">Настройки</span>
+        </Link>
 
         <form action={signOut}>
           <button
