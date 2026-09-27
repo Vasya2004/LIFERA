@@ -125,20 +125,22 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
       {/* Иконка-полоса */}
       <aside className="flex w-20 shrink-0 flex-col items-center py-3">
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
-          {panelCollapsed && (
-            <>
-              <button
-                type="button"
-                onClick={togglePanel}
-                title="Показать подменю"
-                className="flex h-14 w-16 items-center justify-center rounded-2xl text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-200"
-              >
-                <ChevronsRight size={28} className="shrink-0" />
-              </button>
+          <div
+            className={`flex w-full flex-col items-center overflow-hidden transition-all duration-300 ease-in-out ${
+              panelCollapsed ? "max-h-24 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={togglePanel}
+              title="Показать подменю"
+              className="flex h-14 w-16 items-center justify-center rounded-2xl text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-200"
+            >
+              <ChevronsRight size={28} className="shrink-0" />
+            </button>
 
-              <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
-            </>
-          )}
+            <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
+          </div>
 
           <Link
             href="/areas"
@@ -203,15 +205,19 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
       </aside>
 
       {/* Панель-остров с подразделами активного блока */}
-      {!panelCollapsed && (
-        <aside className="flex w-64 shrink-0 flex-col border-l border-neutral-900 bg-neutral-950 text-neutral-100">
+      <aside
+        className={`flex shrink-0 flex-col overflow-hidden border-neutral-900 bg-neutral-950 text-neutral-100 transition-all duration-300 ease-in-out ${
+          panelCollapsed ? "w-0 border-l-0 opacity-0" : "w-64 border-l opacity-100"
+        }`}
+      >
+        <div className="flex w-64 shrink-0 flex-col">
           <div className="flex items-center justify-between px-4 py-4">
             <span className="text-sm font-semibold tracking-wide">{activeSection.label}</span>
             <button
               type="button"
               onClick={togglePanel}
               title="Скрыть подменю"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
             >
               <ChevronLeft size={20} />
             </button>
@@ -261,8 +267,8 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
               </div>
             )}
           </nav>
-        </aside>
-      )}
+        </div>
+      </aside>
     </div>
   );
 }
