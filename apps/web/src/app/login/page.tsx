@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,40 +29,51 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
-      <h1 className="text-2xl font-semibold">Вход в LIFERA</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="rounded border px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="rounded border px-3 py-2"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
-        >
-          {loading ? "Входим..." : "Войти"}
+    <AuthShell mode="login">
+      <form onSubmit={handleSubmit} className="auth-form">
+        <label className="auth-field">
+          <span className="auth-field-label">Email</span>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className="auth-field-input"
+          />
+        </label>
+
+        <label className="auth-field">
+          <span className="auth-field-label">Пароль</span>
+          <input
+            type="password"
+            placeholder="Введите пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            className="auth-field-input"
+          />
+        </label>
+
+        {error && (
+          <p className="auth-alert-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" disabled={loading} className="auth-submit">
+          <span className="auth-submit-inner">
+            {loading ? <span aria-hidden className="auth-spinner" /> : null}
+            <span>{loading ? "Входим…" : "Войти"}</span>
+          </span>
         </button>
       </form>
-      <p className="text-sm">
-        Нет аккаунта?{" "}
-        <Link href="/register" className="underline">
-          Зарегистрироваться
-        </Link>
+
+      <p className="auth-footer-link">
+        Нет аккаунта? <Link href="/register">Зарегистрироваться</Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }

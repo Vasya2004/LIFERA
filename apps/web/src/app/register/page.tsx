@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,55 +35,65 @@ export default function RegisterPage() {
 
   if (pendingConfirmation) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
-        <h1 className="text-2xl font-semibold">Проверьте почту</h1>
-        <p className="text-sm">
+      <AuthShell mode="register">
+        <p className="auth-alert-info" role="status">
           Мы отправили письмо со ссылкой для подтверждения на {email}. Перейдите
           по ссылке из письма, чтобы завершить регистрацию.
         </p>
-        <Link href="/login" className="underline">
-          Войти
-        </Link>
-      </div>
+        <p className="auth-footer-link">
+          <Link href="/login">Войти</Link>
+        </p>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
-      <h1 className="text-2xl font-semibold">Регистрация в LIFERA</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="rounded border px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-          className="rounded border px-3 py-2"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
-        >
-          {loading ? "Создаём..." : "Зарегистрироваться"}
+    <AuthShell mode="register">
+      <form onSubmit={handleSubmit} className="auth-form">
+        <label className="auth-field">
+          <span className="auth-field-label">Email</span>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className="auth-field-input"
+          />
+        </label>
+
+        <label className="auth-field">
+          <span className="auth-field-label">Пароль</span>
+          <input
+            type="password"
+            placeholder="Минимум 6 символов"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            className="auth-field-input"
+          />
+        </label>
+
+        {error && (
+          <p className="auth-alert-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" disabled={loading} className="auth-submit">
+          <span className="auth-submit-inner">
+            {loading ? <span aria-hidden className="auth-spinner" /> : null}
+            <span>{loading ? "Создаём аккаунт…" : "Создать аккаунт"}</span>
+          </span>
         </button>
       </form>
-      <p className="text-sm">
-        Уже есть аккаунт?{" "}
-        <Link href="/login" className="underline">
-          Войти
-        </Link>
+
+      <p className="auth-footer-link">
+        Уже есть аккаунт? <Link href="/login">Войти</Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }
