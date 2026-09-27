@@ -128,10 +128,10 @@ export default function WealtheraDashboardPage() {
 
       <div className="mt-6 flex gap-3 text-sm">
         <Link href="/wealthera/accounts" className="rounded-lg border px-3 py-2">
-          Счета →
+          Счета
         </Link>
         <Link href="/wealthera/portfolio" className="rounded-lg border px-3 py-2">
-          Портфель →
+          Портфель
         </Link>
       </div>
     </div>
