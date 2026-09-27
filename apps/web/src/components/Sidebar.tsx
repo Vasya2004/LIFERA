@@ -8,7 +8,7 @@ import {
   Archive,
   CheckSquare,
   ChevronLeft,
-  ChevronRight,
+  ChevronsRight,
   Clapperboard,
   Gamepad2,
   LayoutDashboard,
@@ -123,19 +123,23 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   return (
     <div className="flex shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
       {/* Иконка-полоса */}
-      <aside className="relative flex w-20 shrink-0 flex-col items-center py-3">
-        {panelCollapsed && (
-          <button
-            type="button"
-            onClick={togglePanel}
-            title="Показать подменю"
-            className="absolute right-0 top-3 z-10 flex h-6 w-6 translate-x-1/2 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-neutral-400 shadow transition-colors hover:bg-neutral-800 hover:text-white"
-          >
-            <ChevronRight size={14} />
-          </button>
-        )}
-
+      <aside className="flex w-20 shrink-0 flex-col items-center py-3">
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
+          {panelCollapsed && (
+            <>
+              <button
+                type="button"
+                onClick={togglePanel}
+                title="Показать подменю"
+                className="flex h-14 w-16 items-center justify-center rounded-2xl text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-200"
+              >
+                <ChevronsRight size={28} className="shrink-0" />
+              </button>
+
+              <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
+            </>
+          )}
+
           <Link
             href="/areas"
             title="Области"
@@ -207,9 +211,9 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
               type="button"
               onClick={togglePanel}
               title="Скрыть подменю"
-              className="flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
             >
-              <ChevronLeft size={14} />
+              <ChevronLeft size={20} />
             </button>
           </div>
 
