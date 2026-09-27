@@ -2,7 +2,7 @@
   "name": "Lifera",
   "short_name": "Lifera",
   "description": "Персональная система управления жизнью с AI и геймификацией",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#FF5A1F",

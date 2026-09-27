@@ -68,7 +68,7 @@ export function ThemeToggle({ initialTheme }: { initialTheme: Theme }) {
   return (
     <button
       aria-label={labels[theme]}
-      className="relative inline-grid h-[54px] w-[104px] grid-cols-2 items-center rounded-full border border-border bg-surface-muted/70 p-1 text-muted-foreground shadow-[var(--shadow-sm)] backdrop-blur-xl transition-colors hover:border-border-strong"
+      className="relative inline-grid h-[54px] w-[104px] grid-cols-2 items-center justify-items-center rounded-full border border-border bg-surface-muted/70 p-1 text-muted-foreground shadow-[var(--shadow-sm)] backdrop-blur-xl transition-colors hover:border-border-strong"
       onClick={toggleTheme}
       title={labels[theme]}
       type="button"
@@ -76,13 +76,13 @@ export function ThemeToggle({ initialTheme }: { initialTheme: Theme }) {
       <span
         aria-hidden="true"
         className={[
-          "absolute left-1 top-1 h-11 w-11 rounded-full bg-foreground shadow-[var(--shadow-sm)] transition-transform duration-200",
-          isDark ? "translate-x-[50px]" : "translate-x-0",
+          "absolute left-[6px] top-1 h-11 w-11 rounded-full bg-foreground shadow-[var(--shadow-sm)] transition-transform duration-200",
+          isDark ? "translate-x-12" : "translate-x-0",
         ].join(" ")}
       />
       <span
         className={[
-          "relative z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors",
+          "relative z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors [&>svg]:block",
           isDark ? "text-muted-foreground" : "text-background",
         ].join(" ")}
       >
@@ -90,11 +90,11 @@ export function ThemeToggle({ initialTheme }: { initialTheme: Theme }) {
       </span>
       <span
         className={[
-          "relative z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors",
+          "relative z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors [&>svg]:block",
           isDark ? "text-background" : "text-muted-foreground",
         ].join(" ")}
       >
-        <Moon aria-hidden="true" size={17} strokeWidth={2.15} />
+        <Moon aria-hidden="true" className="translate-x-px" size={17} strokeWidth={2.15} />
       </span>
     </button>
   );
