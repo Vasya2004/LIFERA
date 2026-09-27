@@ -108,8 +108,10 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
     <div className="flex shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
       {/* Иконка-полоса */}
       <aside className="flex w-20 shrink-0 flex-col items-center py-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/lifera-icon.svg" alt="LIFERA" className="mb-4 h-9 w-9 shrink-0 rounded-xl" />
+        <Link href="/areas" title="Все области" className="mb-4 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/lifera-icon.svg" alt="LIFERA" className="h-9 w-9 rounded-xl" />
+        </Link>
 
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
           {SECTIONS.map((section) => {
@@ -182,7 +184,7 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
 
           {activeSection.key === "areas" && (
             <div className="flex flex-col gap-0.5">
-              <PanelLink href="/areas" label="Все области" icon={LayoutGrid} active={pathname === "/areas"} />
+              <PanelLink href="/areas" label="Главный дашборд" icon={LayoutDashboard} active={pathname === "/areas"} />
               {lifeAreas.map((area) => (
                 <PanelLink
                   key={area.id}
