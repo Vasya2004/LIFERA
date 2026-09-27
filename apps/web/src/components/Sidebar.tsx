@@ -27,6 +27,7 @@ type LifeArea = {
 type Section = {
   key: string;
   label: string;
+  railLabel: string;
   icon: LucideIcon;
   href: string;
   match: (pathname: string) => boolean;
@@ -50,6 +51,7 @@ const SECTIONS: Section[] = [
   {
     key: "areas",
     label: "Мои области жизни",
+    railLabel: "Области",
     icon: LayoutGrid,
     href: "/areas",
     match: (pathname) => pathname.startsWith("/areas"),
@@ -57,6 +59,7 @@ const SECTIONS: Section[] = [
   {
     key: "vaultera",
     label: "VAULTERA",
+    railLabel: "Vaultera",
     icon: Archive,
     href: "/vaultera/movies",
     match: (pathname) => pathname.startsWith("/vaultera"),
@@ -64,6 +67,7 @@ const SECTIONS: Section[] = [
   {
     key: "doit",
     label: "doit",
+    railLabel: "doit",
     icon: ListChecks,
     href: "/doit/dashboard",
     match: (pathname) => pathname.startsWith("/doit"),
@@ -103,11 +107,11 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   return (
     <div className="flex h-screen shrink-0">
       {/* Иконка-полоса */}
-      <aside className="flex w-16 shrink-0 flex-col items-center border-r border-neutral-800 bg-black py-3">
+      <aside className="flex w-20 shrink-0 flex-col items-center border-r border-neutral-800 bg-black py-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/lifera-icon.svg" alt="LIFERA" className="mb-3 h-9 w-9 shrink-0 rounded-xl" />
+        <img src="/brand/lifera-icon.svg" alt="LIFERA" className="mb-4 h-9 w-9 shrink-0 rounded-xl" />
 
-        <nav className="flex flex-1 flex-col items-center gap-1.5">
+        <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
           {SECTIONS.map((section) => {
             const isActive = section.key === activeSection.key;
             const Icon = section.icon;
@@ -115,14 +119,16 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
               <Link
                 key={section.key}
                 href={section.href}
-                title={section.label}
-                className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                className={`flex w-16 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 transition-colors ${
                   isActive
-                    ? "bg-neutral-800 text-white"
-                    : "text-neutral-500 hover:bg-neutral-800/60 hover:text-neutral-300"
+                    ? "bg-white text-black"
+                    : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
                 }`}
               >
-                <Icon size={20} />
+                <Icon size={20} className="shrink-0" />
+                <span className="w-full truncate text-center text-[10px] font-medium leading-tight">
+                  {section.railLabel}
+                </span>
               </Link>
             );
           })}
@@ -131,10 +137,10 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
         <form action={signOut}>
           <button
             type="submit"
-            title="Выйти"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition-colors hover:bg-neutral-800/60 hover:text-neutral-300"
+            className="flex w-16 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-200"
           >
-            <LogOut size={18} />
+            <LogOut size={20} className="shrink-0" />
+            <span className="text-[10px] font-medium leading-tight">Выйти</span>
           </button>
         </form>
       </aside>
