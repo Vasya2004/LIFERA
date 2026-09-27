@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   Archive,
@@ -36,6 +36,14 @@ type Section = {
   href: string;
   match: (pathname: string) => boolean;
 };
+
+/** Есть ли у блока доп. страницы помимо самого блока — от этого зависит, раскрывать ли подменю. */
+function getSubpageCount(sectionKey: string, lifeAreasCount: number) {
+  if (sectionKey === "vaultera") return VAULTERA_ITEMS.length;
+  if (sectionKey === "doit") return DOIT_ITEMS.length;
+  if (sectionKey === "areas") return lifeAreasCount;
+  return 0;
+}
 
 const VAULTERA_ITEMS = [
   { label: "Кино", href: "/vaultera/movies", icon: Clapperboard },
@@ -102,23 +110,23 @@ function PanelLink({
   );
 }
 
-const PANEL_COLLAPSED_KEY = "sidebar-panel-collapsed";
-
 export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   const pathname = usePathname();
   const activeSection = SECTIONS.find((s) => s.match(pathname)) ?? AREAS_SECTION;
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const subpageCount = getSubpageCount(activeSection.key, lifeAreas.length);
+  const [panelCollapsed, setPanelCollapsed] = useState(subpageCount === 0);
+  const lastSectionKey = useRef(activeSection.key);
 
+  // При переходе в другой блок подменю авто-раскрывается, если в блоке есть доп. страницы,
+  // и авто-сворачивается, если их нет; внутри одного блока ручной тоггл не перебивается.
   useEffect(() => {
-    setPanelCollapsed(localStorage.getItem(PANEL_COLLAPSED_KEY) === "1");
-  }, []);
+    if (lastSectionKey.current === activeSection.key) return;
+    lastSectionKey.current = activeSection.key;
+    setPanelCollapsed(subpageCount === 0);
+  }, [activeSection.key, subpageCount]);
 
   function togglePanel() {
-    setPanelCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(PANEL_COLLAPSED_KEY, next ? "1" : "0");
-      return next;
-    });
+    setPanelCollapsed((prev) => !prev);
   }
 
   return (
