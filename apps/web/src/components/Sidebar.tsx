@@ -12,6 +12,7 @@ import {
   Clapperboard,
   Gamepad2,
   Home,
+  Landmark,
   LayoutDashboard,
   LayoutGrid,
   ListChecks,
@@ -20,6 +21,8 @@ import {
   Package,
   PenLine,
   Settings,
+  TrendingUp,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/areas/actions";
@@ -41,6 +44,7 @@ type Section = {
 function getSubpageCount(sectionKey: string, lifeAreasCount: number) {
   if (sectionKey === "vaultera") return VAULTERA_ITEMS.length;
   if (sectionKey === "doit") return DOIT_ITEMS.length;
+  if (sectionKey === "wealthera") return WEALTHERA_ITEMS.length;
   if (sectionKey === "areas") return lifeAreasCount;
   return 0;
 }
@@ -57,6 +61,12 @@ const DOIT_ITEMS = [
   { label: "Дашборд", href: "/doit/dashboard", icon: LayoutDashboard },
   { label: "Привычки на день", href: "/doit/daily", icon: CheckSquare },
   { label: "Креатор-привычки", href: "/doit/creator", icon: PenLine },
+];
+
+const WEALTHERA_ITEMS = [
+  { label: "Дашборд", href: "/wealthera/dashboard", icon: LayoutDashboard },
+  { label: "Счета", href: "/wealthera/accounts", icon: Landmark },
+  { label: "Портфель", href: "/wealthera/portfolio", icon: TrendingUp },
 ];
 
 const AREAS_SECTION: Section = {
@@ -81,6 +91,13 @@ const SECTIONS: Section[] = [
     icon: ListChecks,
     href: "/doit/dashboard",
     match: (pathname) => pathname.startsWith("/doit"),
+  },
+  {
+    key: "wealthera",
+    label: "WEALTHERA",
+    icon: Wallet,
+    href: "/wealthera/dashboard",
+    match: (pathname) => pathname.startsWith("/wealthera"),
   },
 ];
 
@@ -155,14 +172,18 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
             href="/areas"
             title="Области"
             className={`flex h-14 w-16 items-center justify-center rounded-2xl transition-colors ${
-              activeSection.key === "areas"
+              activeSection.key === "areas" && pathname !== "/areas"
                 ? "bg-white text-black"
                 : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={activeSection.key === "areas" ? "/brand/lifera-mark.svg" : "/brand/lifera-mark-dark.svg"}
+              src={
+                activeSection.key === "areas" && pathname !== "/areas"
+                  ? "/brand/lifera-mark.svg"
+                  : "/brand/lifera-mark-dark.svg"
+              }
               alt="Области"
               className="h-8 w-auto shrink-0"
             />
@@ -260,6 +281,20 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
             {activeSection.key === "doit" && (
               <div className="flex flex-col gap-0.5">
                 {DOIT_ITEMS.map((item) => (
+                  <PanelLink
+                    key={item.href}
+                    href={item.href}
+                    label={item.label}
+                    icon={item.icon}
+                    active={pathname === item.href}
+                  />
+                ))}
+              </div>
+            )}
+
+            {activeSection.key === "wealthera" && (
+              <div className="flex flex-col gap-0.5">
+                {WEALTHERA_ITEMS.map((item) => (
                   <PanelLink
                     key={item.href}
                     href={item.href}

@@ -9,7 +9,7 @@ import {
   setCached,
 } from '@/lib/archive-cache';
 
-function useArchiveList(cacheKey, loader) {
+export function useArchiveList(cacheKey, loader) {
   const [data, setDataState] = useState(() => getCached(cacheKey) ?? null);
   const [error, setError] = useState(null);
   const [version, setVersion] = useState(0);
@@ -92,7 +92,7 @@ function useArchiveList(cacheKey, loader) {
   };
 }
 
-function createMutations(api, cachePrefix) {
+export function createMutations(api, cachePrefix) {
   return {
     save: {
       mutate({ id, data }, options = {}) {
