@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Activity,
   Archive,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   Clapperboard,
   Gamepad2,
   LayoutDashboard,
@@ -98,14 +101,40 @@ function PanelLink({
   );
 }
 
+const PANEL_COLLAPSED_KEY = "sidebar-panel-collapsed";
+
 export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   const pathname = usePathname();
   const activeSection = SECTIONS.find((s) => s.match(pathname)) ?? AREAS_SECTION;
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+
+  useEffect(() => {
+    setPanelCollapsed(localStorage.getItem(PANEL_COLLAPSED_KEY) === "1");
+  }, []);
+
+  function togglePanel() {
+    setPanelCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(PANEL_COLLAPSED_KEY, next ? "1" : "0");
+      return next;
+    });
+  }
 
   return (
     <div className="flex shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
       {/* Иконка-полоса */}
-      <aside className="flex w-20 shrink-0 flex-col items-center py-3">
+      <aside className="relative flex w-20 shrink-0 flex-col items-center py-3">
+        {panelCollapsed && (
+          <button
+            type="button"
+            onClick={togglePanel}
+            title="Показать подменю"
+            className="absolute right-0 top-3 z-10 flex h-6 w-6 translate-x-1/2 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-neutral-400 shadow transition-colors hover:bg-neutral-800 hover:text-white"
+          >
+            <ChevronRight size={14} />
+          </button>
+        )}
+
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
           <Link
             href="/areas"
@@ -170,56 +199,66 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
       </aside>
 
       {/* Панель-остров с подразделами активного блока */}
-      <aside className="flex w-64 shrink-0 flex-col border-l border-neutral-900 bg-neutral-950 text-neutral-100">
-        <div className="px-4 py-4">
-          <span className="text-sm font-semibold tracking-wide">{activeSection.label}</span>
-        </div>
+      {!panelCollapsed && (
+        <aside className="flex w-64 shrink-0 flex-col border-l border-neutral-900 bg-neutral-950 text-neutral-100">
+          <div className="flex items-center justify-between px-4 py-4">
+            <span className="text-sm font-semibold tracking-wide">{activeSection.label}</span>
+            <button
+              type="button"
+              onClick={togglePanel}
+              title="Скрыть подменю"
+              className="flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+            >
+              <ChevronLeft size={14} />
+            </button>
+          </div>
 
-        <nav className="flex-1 overflow-y-auto px-2.5 pb-4">
-          {activeSection.key === "vaultera" && (
-            <div className="flex flex-col gap-0.5">
-              {VAULTERA_ITEMS.map((item) => (
-                <PanelLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  active={pathname === item.href}
-                />
-              ))}
-            </div>
-          )}
+          <nav className="flex-1 overflow-y-auto px-2.5 pb-4">
+            {activeSection.key === "vaultera" && (
+              <div className="flex flex-col gap-0.5">
+                {VAULTERA_ITEMS.map((item) => (
+                  <PanelLink
+                    key={item.href}
+                    href={item.href}
+                    label={item.label}
+                    icon={item.icon}
+                    active={pathname === item.href}
+                  />
+                ))}
+              </div>
+            )}
 
-          {activeSection.key === "doit" && (
-            <div className="flex flex-col gap-0.5">
-              {DOIT_ITEMS.map((item) => (
-                <PanelLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  active={pathname === item.href}
-                />
-              ))}
-            </div>
-          )}
+            {activeSection.key === "doit" && (
+              <div className="flex flex-col gap-0.5">
+                {DOIT_ITEMS.map((item) => (
+                  <PanelLink
+                    key={item.href}
+                    href={item.href}
+                    label={item.label}
+                    icon={item.icon}
+                    active={pathname === item.href}
+                  />
+                ))}
+              </div>
+            )}
 
-          {activeSection.key === "areas" && (
-            <div className="flex flex-col gap-0.5">
-              <PanelLink href="/areas" label="Главный дашборд" icon={LayoutDashboard} active={pathname === "/areas"} />
-              {lifeAreas.map((area) => (
-                <PanelLink
-                  key={area.id}
-                  href={`/areas/${area.id}`}
-                  label={area.name}
-                  icon={LayoutGrid}
-                  active={pathname === `/areas/${area.id}`}
-                />
-              ))}
-            </div>
-          )}
-        </nav>
-      </aside>
+            {activeSection.key === "areas" && (
+              <div className="flex flex-col gap-0.5">
+                <PanelLink href="/areas" label="Главный дашборд" icon={LayoutDashboard} active={pathname === "/areas"} />
+                {lifeAreas.map((area) => (
+                  <PanelLink
+                    key={area.id}
+                    href={`/areas/${area.id}`}
+                    label={area.name}
+                    icon={LayoutGrid}
+                    active={pathname === `/areas/${area.id}`}
+                  />
+                ))}
+              </div>
+            )}
+          </nav>
+        </aside>
+      )}
     </div>
   );
 }
