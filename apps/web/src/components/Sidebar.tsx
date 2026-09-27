@@ -122,9 +122,9 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
   }
 
   return (
-    <div className="flex shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
+    <div className="flex h-full shrink-0 overflow-hidden rounded-3xl bg-black shadow-lg">
       {/* Иконка-полоса */}
-      <aside className="flex w-20 shrink-0 flex-col items-center py-3">
+      <aside className="flex h-full w-20 shrink-0 flex-col items-center py-3">
         <nav className="flex flex-1 flex-col items-center gap-1.5 px-2">
           <div
             className={`flex w-full flex-col items-center overflow-hidden transition-all duration-300 ease-in-out ${
@@ -172,8 +172,6 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
             <Home size={26} className="shrink-0" />
           </Link>
 
-          <div className="my-1 h-px w-10 shrink-0 bg-neutral-800" />
-
           {SECTIONS.map((section) => {
             const isActive = section.key === activeSection.key;
             const Icon = section.icon;
@@ -219,11 +217,11 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
 
       {/* Панель-остров с подразделами активного блока */}
       <aside
-        className={`flex shrink-0 flex-col overflow-hidden border-neutral-900 bg-neutral-950 text-neutral-100 transition-all duration-300 ease-in-out ${
+        className={`flex h-full shrink-0 flex-col overflow-hidden border-neutral-900 bg-neutral-950 text-neutral-100 transition-all duration-300 ease-in-out ${
           panelCollapsed ? "w-0 border-l-0 opacity-0" : "w-64 border-l opacity-100"
         }`}
       >
-        <div className="flex w-64 shrink-0 flex-col">
+        <div className="flex h-full w-64 shrink-0 flex-col">
           <div className="flex items-center justify-between px-4 py-4">
             <span className="text-sm font-semibold tracking-wide">{activeSection.label}</span>
             <button
@@ -236,7 +234,7 @@ export default function Sidebar({ lifeAreas }: { lifeAreas: LifeArea[] }) {
             </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-2.5 pb-4">
+          <nav className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-4">
             {activeSection.key === "vaultera" && (
               <div className="flex flex-col gap-0.5">
                 {VAULTERA_ITEMS.map((item) => (
